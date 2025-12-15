@@ -34,9 +34,6 @@
     "vite": "^7.2.4"
   },
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
