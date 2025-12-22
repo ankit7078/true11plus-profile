@@ -1,4 +1,4 @@
-import  { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronRight,
@@ -56,7 +56,7 @@ const Assessment = () => {
   const [assessmentStarted, setAssessmentStarted] = useState(false);
 
   const [currentStep, setCurrentStep] = useState(1);
-  
+
   // Initial state strictly typed
   const [formData, setFormData] = useState<StudentProfile>({
     academicBackground: {
@@ -127,7 +127,7 @@ const Assessment = () => {
 
   const handleArrayChange = (field: string, value: string, checked: boolean) => {
     const keys = field.split('.');
-    
+
     // TS Fix: Explicitly type 'obj' as any to allow dynamic indexing
     const currentArray = keys.reduce((obj: any, key) => obj?.[key], formData) as string[] || [];
 
@@ -189,10 +189,10 @@ const Assessment = () => {
       ...formData,
       assessmentComplete: true,
     };
-    
+
     // If you have an updateProfile function in authContext, uncomment below
     // authContext?.updateProfile(completeProfile); 
-    
+
     console.log("Submitting:", completeProfile);
     navigate('/dashboard');
   };

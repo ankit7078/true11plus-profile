@@ -6,9 +6,13 @@ import ProfileDetails from "./pages/Public-profile";
 import Home from "./pages/Home";
 import Tasks from "./pages/tasks/Tasks";
 import Assessment from "./pages/Assessment";
-import Dashboard from "./pages/dashboard/Dashboard";
+import Dashboard from "./pages/mentor-dashboard/Dashboard";
+import UserDashboard from "./pages/user-dashboard/Dashboard";
 import Profile from "./pages/Profile"
 import PostProfile from "./pages/Post-profile";
+import RoleSelect from "./pages/RoleSelect";
+import AdminPage from "./pages/roles/AdminPage";
+import MentorProfile from "./pages/mentor-dashboard/Profile";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -22,8 +26,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
+  const hideLayoutRoutes = [
+    "/mentor/dashboard",
+    "/user/dashboard",
+    "/mentor/profile",
+    "/",
+    // "/user",
+    // "/mentor",
+    // "/admin",
+  ]
   // Pages where Navbar & Footer should be hidden
-  const hideLayout = location.pathname === "/dashboard";
+  const hideLayout = hideLayoutRoutes.includes(location.pathname);
 
   return (
     <>
@@ -40,9 +53,14 @@ function App() {
       <Router>
         <LayoutWrapper>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/user/home" element={<Home />} />
+            <Route path="/" element={<RoleSelect />} />
+            {/* <Route path="/user" element={<UserPage />} /> */}
+            {/* <Route path="/mentor" element={<MentorPage />} /> */}
+            <Route path="/admin" element={<AdminPage />} />
             <Route
-              path="/tasks"
+              path="/user/tasks"
               element={
                 <ProtectedRoute>
                   <Tasks />
@@ -50,7 +68,7 @@ function App() {
               }
             />
             <Route
-              path="/assessment"
+              path="/user/assessment"
               element={
                 <ProtectedRoute>
                   <Assessment />
@@ -82,10 +100,26 @@ function App() {
               }
             />
             <Route
-              path="/dashboard"
+              path="/mentor/dashboard"
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mentor/profile"
+              element={
+                <ProtectedRoute>
+                  <MentorProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user/dashboard"
+              element={
+                <ProtectedRoute>
+                  <UserDashboard />
                 </ProtectedRoute>
               }
             />

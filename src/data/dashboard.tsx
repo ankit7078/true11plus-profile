@@ -1,21 +1,21 @@
 import { TrendingUp, Target, Award, Calendar } from 'lucide-react';
 
 export const overviewStats = [
-  { label: 'Profile Score', value: '85/100', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
-  { label: 'Universities', value: '3', icon: Target, color: 'text-blue-600', bg: 'bg-blue-50' },
+  { label: 'Students', value: '6', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
+  { label: 'Subjects', value: '3', icon: Target, color: 'text-blue-600', bg: 'bg-blue-50' },
   { label: 'Scholarships', value: '2', icon: Award, color: 'text-orange-500', bg: 'bg-orange-50' },
   { label: 'Deadlines', value: '3', icon: Calendar, color: 'text-red-600', bg: 'bg-red-50' },
 ];
 
 export const deadlineData = [
-  { id: 1, title: "Stanford University", type: "Application", date: "January 15, 2025" },
+  { id: 1, title: "University", type: "Application", date: "January 15, 2025" },
   { id: 2, title: "MIT", type: "Application", date: "January 1, 2025" },
   { id: 3, title: "University of Toronto", type: "Scholarship", date: "February 1, 2025" },
 ];
 
 export const topMatchesData = [
   {
-    id: 1, name: "Stanford University", matchLabel: "75% Match", matchScore: "92/100",
+    id: 1, name: "Tanishk", matchLabel: "75% Match", matchScore: "92/100",
     goodMatchReasons: ["Strong Computer Science program", "Excellent research opportunities"],
     improvementTips: ["Improve SAT score to 1500+", "Complete calculus course"]
   },

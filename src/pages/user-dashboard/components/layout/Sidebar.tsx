@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           >
             {isDesktopOpen || isMobileOpen ? (
               <img 
-                src="./img/logo.png" 
+                src="/img/logo.png" 
                 alt="EduDash" 
                 className="h-10 w-auto object-contain transition-opacity duration-300" 
                 onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => { 
@@ -98,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               /> 
             ) : (
               <img 
-                src="./img/favicon.png" 
+                src="/img/favicon.png" 
                 alt="E" 
                 className="w-8 h-8 object-contain transition-opacity duration-300" 
               />
@@ -107,13 +107,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           
           <div className="space-y-8 flex-1">
             <div>
-              <p className={` font-bold text-gray-400 mb-4 px-4 transition-opacity duration-300 ${!isDesktopOpen && !isMobileOpen && 'md:hidden'}`}>GENERAL</p>
+              {/* <p className={` font-bold text-gray-400 mb-4 px-4 transition-opacity duration-300 ${!isDesktopOpen && !isMobileOpen && 'md:hidden'}`}>GENERAL</p> */}
               <div className="space-y-2">
                 <SidebarItem icon={LayoutGrid} label="Overview" tabId="overview" />
                 <SidebarItem icon={GraduationCap} label="University" tabId="university" />
                 <SidebarItem icon={Award} label="Scholarship" tabId="scholarship" />
                 <SidebarItem icon={ClipboardList} label="Your Task" tabId="tasks" />
-                <SidebarItem icon={ClipboardList} label="Mentor Task" tabId="mentortasks" />
+                {/* <SidebarItem icon={ClipboardList} label="Mentor Task" tabId="mentortasks" /> */}
               </div>
             </div>
             

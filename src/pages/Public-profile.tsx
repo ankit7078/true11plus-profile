@@ -326,10 +326,10 @@ function ProfileDetails() {
       posts.map((post) =>
         post.id === postId
           ? {
-              ...post,
-              liked: !post.liked,
-              likes: post.liked ? post.likes - 1 : post.likes + 1,
-            }
+            ...post,
+            liked: !post.liked,
+            likes: post.liked ? post.likes - 1 : post.likes + 1,
+          }
           : post
       )
     );
@@ -698,16 +698,14 @@ function ProfileDetails() {
                       <div className="flex items-center space-x-6">
                         <button
                           onClick={() => handleLike(post.id)}
-                          className={`flex items-center space-x-2 text-sm ${
-                            post.liked
+                          className={`flex items-center space-x-2 text-sm ${post.liked
                               ? "text-red-600"
                               : "text-gray-600 hover:text-red-600"
-                          }`}
+                            }`}
                         >
                           <Heart
-                            className={`w-4 h-4 ${
-                              post.liked ? "fill-current" : ""
-                            }`}
+                            className={`w-4 h-4 ${post.liked ? "fill-current" : ""
+                              }`}
                           />
                           <span>{post.likes}</span>
                         </button>

@@ -17,10 +17,10 @@ interface NavItem {
 /* ---------------- DATA ---------------- */
 
 const NAV_ITEMS: NavItem[] = [
-  { name: "Home", href: "/", icon: Home },
-  { name: "Assessment", href: "/assessment", icon: ClipboardList, authOnly: true },
-  { name: "Tasks", href: "/tasks", icon: ClipboardList, authOnly: true },
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, authOnly: true },
+  { name: "Home", href: "/user/home", icon: Home },
+  { name: "Assessment", href: "/user/assessment", icon: ClipboardList, authOnly: true },
+  { name: "Tasks", href: "/user/tasks", icon: ClipboardList, authOnly: true },
+  { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard, authOnly: true },
   { name: "Profile", href: "/profile", icon: User, authOnly: true },
 ];
 
@@ -49,7 +49,7 @@ const Navbar = () => {
           <Link to="/" className="flex items-center">
             <img
               src="/img/logo.png"
-              alt="Project C Logo"
+              alt="true11plus"
               className="h-10 w-auto object-contain"
             />
           </Link>
@@ -63,10 +63,9 @@ const Navbar = () => {
                   key={item.name}
                   to={item.href}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition
-                    ${
-                      isActive(item.href)
-                        ? "text-blue-700 bg-blue-50"
-                        : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
+                    ${isActive(item.href)
+                      ? "text-blue-700 bg-blue-50"
+                      : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
                     }`}
                 >
                   <Icon size={16} />
@@ -117,10 +116,9 @@ const Navbar = () => {
                   to={item.href}
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition
-                    ${
-                      isActive(item.href)
-                        ? "text-blue-700 bg-blue-50"
-                        : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
+                    ${isActive(item.href)
+                      ? "text-blue-700 bg-blue-50"
+                      : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
                     }`}
                 >
                   <Icon size={20} />
