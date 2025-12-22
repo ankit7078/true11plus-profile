@@ -1,4 +1,4 @@
-import { Target, Award, Star, Circle, CalendarDays, Clock } from 'lucide-react';
+import { Target, Star, Circle, CalendarDays, Clock } from 'lucide-react';
 import { overviewStats, topMatchesData, deadlineData } from '../../../../data/dashboard';
 
 const Overview = () => {

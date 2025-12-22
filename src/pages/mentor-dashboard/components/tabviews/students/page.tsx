@@ -52,7 +52,7 @@ const studentsData = [
 ];
 
 export default function StudentDashboard() {
-    const [selectedStudent, setSelectedStudent] = useState(null);
+    const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
     // View Logic
     if (selectedStudent) {

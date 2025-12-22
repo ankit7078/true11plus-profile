@@ -1,8 +1,42 @@
 'use client'
 
+import React from 'react';
 import { Edit } from "lucide-react";
 
+// --- Interfaces for Type Safety ---
+
+interface CardProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+interface StatCardProps {
+  label: string;
+  value: string;
+}
+
+interface InfoFieldProps {
+  label: string;
+  value: string;
+}
+
+interface AvailabilityItemProps {
+  day: string;
+  time: string;
+}
+
+// --- Main Component ---
+
 const MentorProfilePage = () => {
+  const skills: string[] = [
+    "Career Counseling",
+    "University Admissions",
+    "Scholarship Guidance",
+    "Study Abroad",
+    "Resume Building",
+    "Interview Preparation",
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -31,6 +65,7 @@ const MentorProfilePage = () => {
                 className="absolute bottom-1 right-1 h-7 w-7 rounded-full bg-white text-emerald-600
                 flex items-center justify-center shadow hover:scale-105 transition"
                 title="Edit avatar"
+                type="button"
               >
                 <Edit size={14} />
               </button>
@@ -70,14 +105,7 @@ const MentorProfilePage = () => {
         {/* ================= EXPERTISE ================= */}
         <Card title="Areas of Expertise">
           <div className="flex flex-wrap gap-3">
-            {[
-              "Career Counseling",
-              "University Admissions",
-              "Scholarship Guidance",
-              "Study Abroad",
-              "Resume Building",
-              "Interview Preparation",
-            ].map(skill => (
+            {skills.map((skill) => (
               <span
                 key={skill}
                 className="px-4 py-2 rounded-full bg-emerald-50
@@ -95,7 +123,7 @@ const MentorProfilePage = () => {
           <Card title="Contact Information">
             <div className="space-y-4">
               <InfoField label="Email" value="amit.mentor@example.com" />
-              <InfoField label="Phone" value="+9143210 98765 " />
+              <InfoField label="Phone" value="+91 43210 98765" />
               <InfoField label="Location" value="India (Online Sessions)" />
             </div>
           </Card>
@@ -117,7 +145,7 @@ const MentorProfilePage = () => {
 
 /* ================= REUSABLE COMPONENTS ================= */
 
-const Card = ({ title, children }) => (
+const Card: React.FC<CardProps> = ({ title, children }) => (
   <div className="bg-white rounded-lg border border-slate-100 p-6 shadow-sm hover:shadow-md transition">
     <h3 className="text-lg font-semibold text-slate-800 mb-4">
       {title}
@@ -126,21 +154,21 @@ const Card = ({ title, children }) => (
   </div>
 );
 
-const StatCard = ({ label, value }) => (
+const StatCard: React.FC<StatCardProps> = ({ label, value }) => (
   <div className="bg-white rounded-lg border border-slate-100 p-6 shadow-sm hover:shadow-md transition">
     <p className="text-sm text-slate-500">{label}</p>
     <p className="text-2xl font-bold text-slate-800 mt-2">{value}</p>
   </div>
 );
 
-const InfoField = ({ label, value }) => (
+const InfoField: React.FC<InfoFieldProps> = ({ label, value }) => (
   <div>
     <p className="text-sm text-slate-500">{label}</p>
     <p className="font-medium text-slate-800 mt-1">{value}</p>
   </div>
 );
 
-const AvailabilityItem = ({ day, time }) => (
+const AvailabilityItem: React.FC<AvailabilityItemProps> = ({ day, time }) => (
   <div className="flex items-center justify-between text-sm">
     <span className="text-slate-600">{day}</span>
     <span className="font-medium text-slate-800">{time}</span>

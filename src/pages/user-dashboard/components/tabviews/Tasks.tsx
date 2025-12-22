@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {  useNavigate } from "react-router-dom";
 import {
   Calendar,
   CheckCircle2,
@@ -11,9 +11,8 @@ import {
   ArrowLeft,
   AlignLeft,
   CheckSquare,
-  MessageCircle,
   Paperclip,
-  Send,
+
   FolderOpen,
   Download,
 } from "lucide-react";
@@ -257,7 +256,7 @@ interface TaskDetailViewProps {
   onMarkComplete: (id: number) => void;
 }
 
-const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onBack, onMarkComplete }) => {
+const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onBack, }) => {
   return (
     <div className="animate-in fade-in zoom-in-95 duration-200 p-1">
       {/* Header / Nav */}

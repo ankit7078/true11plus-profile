@@ -1,15 +1,109 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
     ArrowLeft, Mail, Phone, Calendar, MapPin,
     MoreHorizontal, CheckCircle2, Clock,
     AlertCircle, Download, FolderOpen, BookOpen,
     StickyNote, Heart, MessageCircle, Share,
     ChevronRight, Paperclip, AlignLeft, CheckSquare,
-    Award, Send
+     Send, 
 } from 'lucide-react';
 
-const StudentDetail = ({ student = { name: "Kelvin Yeboah", id: "123", course: "B.Tech CS", status: "Active", progress: "75%", bio: "Aspiring Full Stack Developer", email: "kelvin@example.com", phone: "+91 98765 43210", date: "Sep 2023" }, onBack }) => {
-    const [activeTab, setActiveTab] = useState('tasks'); // Defaulted to 'tasks'
+// ================= TYPES & INTERFACES =================
+
+interface Student {
+    name: string;
+    id: string;
+    course: string;
+    status: string;
+    progress: string;
+    bio: string;
+    email: string;
+    phone: string;
+    date: string;
+}
+
+interface ChecklistItem {
+    id: number;
+    text: string;
+    done: boolean;
+}
+
+interface Task {
+    id: number;
+    title: string;
+    due: string;
+    status: string;
+    priority: string;
+    description: string;
+    checklist: ChecklistItem[];
+    attachments: number;
+    completedDate: string | null;
+}
+
+interface Post {
+    id: number;
+    author: string;
+    authorAvatar: string | null;
+    timestamp: string;
+    content: string;
+    likes: number;
+    liked: boolean;
+    comments: number[];
+    shares: number;
+    image: string | null;
+}
+
+// --- Component Prop Interfaces ---
+
+interface StudentDetailProps {
+    student?: Student;
+    onBack: () => void;
+}
+
+interface TabButtonProps {
+    label: string;
+    isActive: boolean;
+    onClick: () => void;
+}
+
+interface InfoCardProps {
+    icon: React.ElementType;
+    label: string;
+    value: string;
+}
+
+interface AvatarProps {
+    name: string;
+    size?: 'sm' | 'xl';
+}
+
+interface StatusBadgeProps {
+    status: string;
+}
+
+interface TaskDetailViewProps {
+    task: Task;
+    onBack: () => void;
+}
+
+// ================= MAIN COMPONENT =================
+
+const StudentDetail: React.FC<StudentDetailProps> = ({ 
+    student = { 
+        name: "Kelvin Yeboah", 
+        id: "123", 
+        course: "B.Tech CS", 
+        status: "Active", 
+        progress: "75%", 
+        bio: "Aspiring Full Stack Developer", 
+        email: "kelvin@example.com", 
+        phone: "+91 98765 43210", 
+        date: "Sep 2023" 
+    }, 
+    onBack 
+}) => {
+    // Explicitly typing state as a string literal union or generic string
+    const [activeTab, setActiveTab] = useState<string>('tasks'); 
 
     return (
         <div className="min-h-screen bg-slate-50/50 p-4 animate-in fade-in zoom-in duration-300">
@@ -202,7 +296,7 @@ const OverviewTab = () => {
 };
 
 // 2. Horizontal Tab Button
-const TabButton = ({ label, isActive, onClick }) => (
+const TabButton: React.FC<TabButtonProps> = ({ label, isActive, onClick }) => (
     <button
         onClick={onClick}
         className={`pb-3 text-sm font-medium transition-all relative whitespace-nowrap ${isActive
@@ -216,7 +310,7 @@ const TabButton = ({ label, isActive, onClick }) => (
 );
 
 // 3. Profile Content
-const ProfileTab = ({ student }) => (
+const ProfileTab: React.FC<{ student: Student }> = ({ student }) => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
             <div className="bg-white p-6 rounded-xl border border-slate-200/60 shadow-sm">
@@ -258,8 +352,8 @@ const ProfileTab = ({ student }) => (
 );
 
 // 4. Activity Tab
-const ActivityTab = ({ studentName }) => {
-    const [posts, setPosts] = useState([
+const ActivityTab: React.FC<{ studentName: string }> = ({ studentName }) => {
+    const [posts, setPosts] = useState<Post[]>([
         {
             id: 1,
             author: studentName,
@@ -286,10 +380,10 @@ const ActivityTab = ({ studentName }) => {
         }
     ]);
 
-    const formatTimeAgo = (dateString) => {
+    const formatTimeAgo = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
-        const seconds = Math.floor((now - date) / 1000);
+        const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
         if (seconds < 60) return 'Just now';
         const minutes = Math.floor(seconds / 60);
         if (minutes < 60) return `${minutes}m ago`;
@@ -299,7 +393,7 @@ const ActivityTab = ({ studentName }) => {
         return `${days}d ago`;
     };
 
-    const handleLike = (id) => {
+    const handleLike = (id: number) => {
         setPosts(currentPosts => currentPosts.map(post => {
             if (post.id === id) {
                 return {
@@ -361,9 +455,9 @@ const ActivityTab = ({ studentName }) => {
 // 5. Tasks Tab (Modified for Detail View)
 const TasksTab = () => {
     // State to toggle between List View and Detail View
-    const [selectedTask, setSelectedTask] = useState(null);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-    const allTasks = [
+    const allTasks: Task[] = [
         {
             id: 1,
             title: "React Components Deep Dive",
@@ -524,7 +618,7 @@ const TasksTab = () => {
 };
 
 // 5.1 New Task Detail Component
-const TaskDetailView = ({ task, onBack }) => {
+const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onBack }) => {
     return (
         <div className="animate-in fade-in zoom-in-95 duration-200">
             {/* Header / Nav */}
@@ -592,83 +686,83 @@ const TaskDetailView = ({ task, onBack }) => {
                     </div>
 
                     {/* Discussion & Grading Area */}
-                      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
 
-            {/* ================= Header ================= */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center">
-                        <MessageCircle className="w-5 h-5 text-indigo-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-900">
-                        Discussion & Grading
-                    </h3>
-                </div>
+                        {/* ================= Header ================= */}
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center">
+                                    <MessageCircle className="w-5 h-5 text-indigo-600" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-slate-900">
+                                    Discussion & Grading
+                                </h3>
+                            </div>
 
-                {/* Grade Selector */}
-                <div className="flex items-center gap-3">
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                        Grade
-                    </span>
-                    <select
-                        className="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2
+                            {/* Grade Selector */}
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                    Grade
+                                </span>
+                                <select
+                                    className="bg-white border border-slate-200 text-slate-700 text-sm rounded-lg px-3 py-2
                                    focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition"
-                    >
-                        <option>Select grade</option>
-                        <option>A+ (Excellent)</option>
-                        <option>A (Very Good)</option>
-                        <option>B (Good)</option>
-                        <option>C (Average)</option>
-                        <option>F (Fail)</option>
-                    </select>
-                </div>
-            </div>
+                                >
+                                    <option>Select grade</option>
+                                    <option>A+ (Excellent)</option>
+                                    <option>A (Very Good)</option>
+                                    <option>B (Good)</option>
+                                    <option>C (Average)</option>
+                                    <option>F (Fail)</option>
+                                </select>
+                            </div>
+                        </div>
 
-            {/* ================= Comment Box ================= */}
-            <div className="flex gap-4">
+                        {/* ================= Comment Box ================= */}
+                        <div className="flex gap-4">
 
-                {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700
-                                text-white flex items-center justify-center font-semibold text-sm shadow">
-                    M
-                </div>
+                            {/* Avatar */}
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700
+                              text-white flex items-center justify-center font-semibold text-sm shadow">
+                                M
+                            </div>
 
-                {/* Input Area */}
-                <div className="flex-1 relative">
-                    <textarea
-                        placeholder="Write feedback or comments for the student..."
-                        className="w-full min-h-[100px] resize-y rounded-xl border border-slate-200
-                                   bg-slate-50 px-4 py-3 text-sm text-slate-700
-                                   focus:outline-none focus:ring-2 focus:ring-indigo-500/30
-                                   focus:border-indigo-500 transition"
-                    />
+                            {/* Input Area */}
+                            <div className="flex-1 relative">
+                                <textarea
+                                    placeholder="Write feedback or comments for the student..."
+                                    className="w-full min-h-[100px] resize-y rounded-xl border border-slate-200
+                                       bg-slate-50 px-4 py-3 text-sm text-slate-700
+                                       focus:outline-none focus:ring-2 focus:ring-indigo-500/30
+                                       focus:border-indigo-500 transition"
+                                />
 
-                    {/* Actions */}
-                    <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                        <button
-                            type="button"
-                            className="p-2 rounded-lg text-slate-400 hover:text-indigo-600
-                                       hover:bg-indigo-50 transition"
-                            aria-label="Attach file"
-                        >
-                            <Paperclip className="w-4 h-4" />
-                        </button>
+                                {/* Actions */}
+                                <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        className="p-2 rounded-lg text-slate-400 hover:text-indigo-600
+                                         hover:bg-indigo-50 transition"
+                                        aria-label="Attach file"
+                                    >
+                                        <Paperclip className="w-4 h-4" />
+                                    </button>
 
-                        <button
-                            type="button"
-                            className="inline-flex items-center gap-1.5
-                                       bg-indigo-600 text-white text-xs font-semibold
-                                       px-4 py-2 rounded-lg
-                                       hover:bg-indigo-700 transition shadow-sm"
-                        >
-                            Post
-                            <Send className="w-3.5 h-3.5" />
-                        </button>
+                                    <button
+                                        type="button"
+                                        className="inline-flex items-center gap-1.5
+                                         bg-indigo-600 text-white text-xs font-semibold
+                                         px-4 py-2 rounded-lg
+                                         hover:bg-indigo-700 transition shadow-sm"
+                                    >
+                                        Post
+                                        <Send className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
-                </div>
-            </div>
-
-        </div>
                 </div>
 
                 {/* Sidebar Info */}
@@ -779,7 +873,7 @@ const DocumentsTab = () => (
 
 // ================= UI HELPERS =================
 
-const InfoCard = ({ icon: Icon, label, value }) => (
+const InfoCard: React.FC<InfoCardProps> = ({ icon: Icon, label, value }) => (
     <div className="flex items-center gap-4 p-3 rounded-lg border border-slate-100 bg-slate-50/50">
         <div className="bg-white p-2 rounded-md border border-slate-100 text-slate-400">
             <Icon className="w-4 h-4" />
@@ -791,7 +885,7 @@ const InfoCard = ({ icon: Icon, label, value }) => (
     </div>
 );
 
-const Avatar = ({ name, size = "sm" }) => {
+const Avatar: React.FC<AvatarProps> = ({ name, size = "sm" }) => {
     const sizeClasses = size === "xl" ? "h-20 w-20 text-3xl shadow-md border-4 border-white" : "h-10 w-10 text-sm";
     const colors = ["bg-indigo-100 text-indigo-700", "bg-rose-100 text-rose-700", "bg-emerald-100 text-emerald-700", "bg-amber-100 text-amber-700"];
     const colorIndex = name ? name.length % colors.length : 0;
@@ -804,7 +898,7 @@ const Avatar = ({ name, size = "sm" }) => {
     );
 };
 
-const StatusBadge = ({ status }) => {
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
     const isActive = status === "Active";
     return (
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${isActive

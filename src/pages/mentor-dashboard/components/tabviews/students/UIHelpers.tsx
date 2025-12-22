@@ -1,4 +1,23 @@
-export const StatusBadge = ({ status }) => {
+
+
+// --- Types ---
+
+interface StatusBadgeProps {
+  status: string; // You can change this to "Active" | "Inactive" for stricter typing
+}
+
+interface AvatarProps {
+  name: string;
+  size?: 'sm' | 'lg'; // Optional because we provide a default value
+}
+
+interface ProgressBarProps {
+  value: string; // Expecting a string with units, e.g., "50%"
+}
+
+// --- Components ---
+
+export const StatusBadge = ({ status }: StatusBadgeProps) => {
   const styles = status === "Active" 
     ? "bg-emerald-100 text-emerald-700" 
     : "bg-red-100 text-red-700";
@@ -10,7 +29,7 @@ export const StatusBadge = ({ status }) => {
   );
 };
 
-export const Avatar = ({ name, size = "sm" }) => {
+export const Avatar = ({ name, size = "sm" }: AvatarProps) => {
   const sizeClasses = size === "lg" ? "h-24 w-24 text-3xl" : "h-10 w-10 text-sm";
   
   return (
@@ -20,7 +39,7 @@ export const Avatar = ({ name, size = "sm" }) => {
   );
 };
 
-export const ProgressBar = ({ value }) => (
+export const ProgressBar = ({ value }: ProgressBarProps) => (
   <div className="flex items-center gap-2">
     <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
       <div className="h-full bg-emerald-500" style={{ width: value }} />

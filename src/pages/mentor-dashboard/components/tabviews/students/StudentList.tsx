@@ -1,6 +1,29 @@
+import React from 'react';
 import { StatusBadge, Avatar, ProgressBar } from './UIHelpers';
 
-const StudentList = ({ students, onView }) => {
+// --- Interfaces ---
+
+export interface Student {
+  id: string | number;
+  name: string;
+  email: string;
+  course: string;
+  progress: string; // Matches the ProgressBarProps value type (e.g. "75%")
+  status: string;   // Matches StatusBadgeProps (e.g. "Active")
+}
+
+interface StudentListProps {
+  students: Student[];
+  onView: (student: Student) => void;
+}
+
+interface TableHelperProps {
+  children: React.ReactNode;
+}
+
+// --- Main Component ---
+
+const StudentList: React.FC<StudentListProps> = ({ students, onView }) => {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -58,14 +81,15 @@ const StudentList = ({ students, onView }) => {
   );
 };
 
-// Local table helpers
-const Th = ({ children }) => (
+// --- Local Table Helpers ---
+
+const Th: React.FC<TableHelperProps> = ({ children }) => (
   <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
     {children}
   </th>
 );
 
-const Td = ({ children }) => (
+const Td: React.FC<TableHelperProps> = ({ children }) => (
   <td className="px-6 py-4 text-sm text-slate-600">{children}</td>
 );
 
