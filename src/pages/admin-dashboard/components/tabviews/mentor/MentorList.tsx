@@ -1,48 +1,38 @@
+'use client'
+
 import React from 'react';
 import { StatusBadge, Avatar, ProgressBar } from './UIHelpers';
+import type { Mentor } from './type';
 
-// --- Interfaces ---
-
-export interface Student {
-  id: string | number;
-  name: string;
-  email: string;
-  course: string;
-  progress: string; // Matches the ProgressBarProps value type (e.g. "75%")
-  status: string;   // Matches StatusBadgeProps (e.g. "Active")
-}
-
-interface StudentListProps {
-  students: Student[];
-  onView: (student: Student) => void;
+interface MentorListProps {
+  students: Mentor[];
+  onView: (student: Mentor) => void;
 }
 
 interface TableHelperProps {
   children: React.ReactNode;
 }
 
-// --- Main Component ---
-
-const StudentList: React.FC<StudentListProps> = ({ students, onView }) => {
+const MentorList: React.FC<MentorListProps> = ({ students, onView }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h3 className="text-2xl font-bold text-slate-800">Students List</h3>
-        <button className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition">
-          + Add Student
+        <h3 className="text-2xl font-bold text-slate-800">Mentor List</h3>
+        <button className="px-4 py-2 rounded-md bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition">
+          + Add Mentor
         </button>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-md shadow-xs">
+      <div className="bg-white rounded-md shadow-xs overflow-hidden border border-slate-200">
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <Th>Student</Th>
+                <Th>Mentor</Th>
                 <Th>Email</Th>
-                <Th>Course</Th>
+                <Th>Specialization</Th>
                 <Th>Progress</Th>
                 <Th>Status</Th>
                 <Th>Action</Th>
@@ -53,11 +43,12 @@ const StudentList: React.FC<StudentListProps> = ({ students, onView }) => {
                 <tr key={student.id} className="hover:bg-slate-50 transition">
                   <td className="px-6 py-4 flex items-center gap-3">
                     <Avatar name={student.name} />
-                    <span className="font-medium text-slate-800">{student.name}</span>
+                    <span className="font-medium text-slate-800 text-sm">{student.name}</span>
                   </td>
                   <Td>{student.email}</Td>
-                  <Td>{student.course}</Td>
+                  <Td>{student.specialization}</Td>
                   <Td>
+                    {/* Maps studentsAssigned or explicit progress if you have it */}
                     <ProgressBar value={student.progress} />
                   </Td>
                   <Td>
@@ -82,7 +73,6 @@ const StudentList: React.FC<StudentListProps> = ({ students, onView }) => {
 };
 
 // --- Local Table Helpers ---
-
 const Th: React.FC<TableHelperProps> = ({ children }) => (
   <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">
     {children}
@@ -93,4 +83,4 @@ const Td: React.FC<TableHelperProps> = ({ children }) => (
   <td className="px-6 py-4 text-sm text-slate-600">{children}</td>
 );
 
-export default StudentList;
+export default MentorList;

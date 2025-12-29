@@ -22,7 +22,7 @@ export default function RoleSelect() {
     {
       title: "Admin",
       desc: "Control platform settings, users, and analytics",
-      path: "/admin",
+      path: "/admin/dashboard",
       gradient: "from-orange-500 ",
       icon: ShieldCheck,
     },

@@ -2,11 +2,13 @@ import React from 'react';
 import { PanelLeft, Search, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+// 1. Define the interface for the component props
 interface HeaderProps {
   toggleDesktop: () => void;
   toggleMobile: () => void;
 }
 
+// 2. Apply the interface to the component
 const Header: React.FC<HeaderProps> = ({ toggleDesktop, toggleMobile }) => {
   return (
     <header className="p-2 px-3 flex items-center justify-between bg-[var(--bg-main)] flex-shrink-0 sticky top-0 z-30">
@@ -45,7 +47,7 @@ const Header: React.FC<HeaderProps> = ({ toggleDesktop, toggleMobile }) => {
             <p className="text-[var(--text-subtle)] font-medium text-sm">Student</p>
             <p className="font-bold text-gray-800">Jannelia</p>
           </div>
-          <Link to="/mentor/dashboard?tab=profile">
+          <Link to="/admin/dashboard?tab=profile">
             <div className="h-12 w-12 cursor-pointer rounded-full overflow-hidden border border-gray-200">
               <img
                 src="/img/profile.png"

@@ -14,6 +14,13 @@ import Settings from './components/tabviews/Settings';
 import Tasks from './components/tabviews/Tasks';
 import MentorTasks from './components/tabviews/mentortask/MentorTask';
 import Students from "./components/tabviews/students/page"
+import Mentor from "./components/tabviews/mentor/page"
+import BlogList from './components/tabviews/Blog';
+import LegalTabs from './components/tabviews/legals/LegalMain';
+import EnquiryDashboard from './components/tabviews/Enquiry';
+import EventsDashboard from './components/tabviews/Events';
+import HelpSupport from './components/tabviews/HelpSupport';
+import NewsDashboard from './components/tabviews/NewsAndUpdate';
 
 // Utility for Scrollbar styles
 const ScrollbarStyles = () => (
@@ -37,10 +44,17 @@ const App = () => {
       case 'overview': return <Overview />;
       case 'university': return <University />;
       case 'students': return <Students />;
+      case 'mentor': return <Mentor />;
+      case 'blog': return <BlogList />;
       case 'scholarship': return <Scholarship />;
       case 'tasks': return <Tasks />;
       case 'mentortasks': return <MentorTasks />;
       case 'settings': return <Settings />;
+      case 'legals': return <LegalTabs />;
+      case 'enquiry': return <EnquiryDashboard />;
+      case 'events': return <EventsDashboard />;
+      case 'helpandsupport': return <HelpSupport />;
+      case 'newsandupdate': return <NewsDashboard />;
       case 'profile': return <Profile />;
       default: return <Overview />;
     }

@@ -21,7 +21,6 @@ interface TableHelperProps {
   children: React.ReactNode;
 }
 
-// --- Main Component ---
 
 const StudentList: React.FC<StudentListProps> = ({ students, onView }) => {
   return (
@@ -29,13 +28,13 @@ const StudentList: React.FC<StudentListProps> = ({ students, onView }) => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h3 className="text-2xl font-bold text-slate-800">Students List</h3>
-        <button className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition">
+        <button className="px-4 py-2 rounded-md bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition">
           + Add Student
         </button>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-md shadow-xs">
+      <div className="bg-white rounded-md shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
             <thead className="bg-slate-50 border-b border-slate-200">

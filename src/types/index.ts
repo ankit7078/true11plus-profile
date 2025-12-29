@@ -136,3 +136,4 @@ export interface Scholarship {
     | "rejected";
   matchScore?: number;
 }
+

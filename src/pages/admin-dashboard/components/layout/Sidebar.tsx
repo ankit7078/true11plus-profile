@@ -2,7 +2,18 @@ import React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   LayoutGrid,
-  Users,
+  Users, // Changed for Student
+  UserCog, // Changed for Mentor
+  GraduationCap,
+  Award,
+  ClipboardList,
+  BookOpen, // Changed for Blog
+  Scale, // Changed for Legals
+  MessageSquareQuote, // Changed for Enquiry
+  CalendarDays, // Changed for Events
+  Newspaper, // Changed for New & Update
+  LifeBuoy, // Changed for Help & Support
+  ListTodo, // Changed for Mentor Task
   Settings,
   LogOut,
   X,
@@ -45,8 +56,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     <button
       onClick={() => handleTabChange(tabId)}
       className={`group relative w-full flex items-center space-x-3 px-3 py-2 rounded-xl transition-all duration-200 font-medium ${activeTab === tabId
-        ? 'bg-purple-50 text-purple-600 border border-purple-100'
-        : 'text-gray-500 hover:bg-purple-50 hover:text-purple-600'
+          ? 'bg-purple-50 text-purple-600 border border-purple-100'
+          : 'text-gray-500 hover:bg-purple-50 hover:text-purple-600'
         }`}
     >
       <Icon className={`h-5 w-5 flex-shrink-0 ${activeTab === tabId ? 'text-purple-600' : 'text-gray-400 group-hover:text-purple-600'}`} />
@@ -118,6 +129,17 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="space-y-1.5">
                 <SidebarItem icon={LayoutGrid} label="Overview" tabId="overview" />
                 <SidebarItem icon={Users} label="Student" tabId="students" />
+                <SidebarItem icon={ClipboardList} label="Student Task" tabId="tasks" />
+                <SidebarItem icon={UserCog} label="Mentor" tabId="mentor" />
+                <SidebarItem icon={ListTodo} label="Mentor Task" tabId="mentortasks" />
+                <SidebarItem icon={GraduationCap} label="University" tabId="university" />
+                <SidebarItem icon={Award} label="Scholarship" tabId="scholarship" />
+                <SidebarItem icon={BookOpen} label="Blog" tabId="blog" />
+                <SidebarItem icon={CalendarDays} label="Events" tabId="events" />
+                <SidebarItem icon={Newspaper} label="New & Update" tabId="newsandupdate" />
+                <SidebarItem icon={MessageSquareQuote} label="Enquiry" tabId="enquiry" />
+                <SidebarItem icon={LifeBuoy} label="Help & Support" tabId="helpandsupport" />
+                <SidebarItem icon={Scale} label="Legals" tabId="legals" />
               </div>
             </div>
           </div>
