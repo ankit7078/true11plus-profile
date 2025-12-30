@@ -10,11 +10,13 @@ import {
   Trash2,
   Edit,
   Eye,
-  X,
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
-  MoreVertical // Imported the 3-dot icon
+  MoreVertical,
+  Users,
+  Heart,
+  Save
 } from 'lucide-react';
 
 // --- 1. Types & Interfaces ---
@@ -26,11 +28,12 @@ interface Event {
   location: string;
   category: 'Workshop' | 'Retreat' | 'Class' | 'Webinar';
   price: string;
-  attendees: number;
-  capacity: number;
+  interested: number;
   status: 'Upcoming' | 'Completed' | 'Cancelled';
   description: string;
 }
+
+type ViewState = 'list' | 'detail' | 'form';
 
 // --- 2. Mock Data Generator ---
 const generateMockEvents = (): Event[] => {
@@ -45,8 +48,7 @@ const generateMockEvents = (): Event[] => {
     location: i % 2 === 0 ? "Main Studio, Dehradun" : "Online (Zoom)",
     category: categories[i % 4],
     price: `$${(i + 1) * 10}`,
-    attendees: 10 + i,
-    capacity: 50,
+    interested: 20 + (i * 5),
     status: statuses[i % 3],
     description: "A refreshing session focusing on wellness and breathwork."
   }));
@@ -55,7 +57,7 @@ const generateMockEvents = (): Event[] => {
 const EventsDashboard: React.FC = () => {
   // --- State Management ---
   const [events, setEvents] = useState<Event[]>(generateMockEvents());
-  const [view, setView] = useState<'list' | 'detail'>('list');
+  const [view, setView] = useState<ViewState>('list');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   
   // Search & Filter
@@ -66,11 +68,12 @@ const EventsDashboard: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Modals
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
+  // Modals (Only keeping Delete modal as a popup for safety, Form is now a page)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [eventToDeleteId, setEventToDeleteId] = useState<number | null>(null);
+
+  // Edit Mode State for the Form Page
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Dropdown Menu State
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
@@ -85,8 +88,7 @@ const EventsDashboard: React.FC = () => {
     location: '',
     category: 'Class',
     price: '',
-    attendees: 0,
-    capacity: 0,
+    interested: 0,
     status: 'Upcoming',
     description: ''
   };
@@ -95,16 +97,43 @@ const EventsDashboard: React.FC = () => {
   // --- URL Management ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (view === 'detail' && selectedEvent) {
+    const viewParam = params.get('view');
+    const eventIdParam = params.get('eventId');
+
+    if (viewParam === 'detail' && eventIdParam) {
+      const found = events.find(e => e.id === Number(eventIdParam));
+      if (found) {
+        setSelectedEvent(found);
+        setView('detail');
+      }
+    } else if (viewParam === 'form') {
+       // Ideally you might handle deep linking to edit here, but for now we reset
+       // if no specific logic is needed.
+    }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (view === 'list') {
+      params.delete('eventId');
+      params.delete('mode');
+      params.set('view', 'list');
+    } else if (view === 'detail' && selectedEvent) {
       params.set('view', 'detail');
       params.set('eventId', selectedEvent.id.toString());
-    } else {
-      params.delete('eventId');
-      params.set('view', 'list');
+      params.delete('mode');
+    } else if (view === 'form') {
+      params.set('view', 'form');
+      if (isEditMode && selectedEvent) {
+        params.set('eventId', selectedEvent.id.toString());
+        params.set('mode', 'edit');
+      } else {
+        params.set('mode', 'create');
+      }
     }
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.pushState({}, '', newUrl);
-  }, [view, selectedEvent]);
+  }, [view, selectedEvent, isEditMode]);
 
   // --- Click Outside to Close Dropdown ---
   useEffect(() => {
@@ -137,18 +166,19 @@ const EventsDashboard: React.FC = () => {
   const handleViewDetail = (event: Event) => {
     setSelectedEvent(event);
     setView('detail');
-    setActiveMenuId(null); // Close menu
+    setActiveMenuId(null);
   };
 
   const openDeleteModal = (id: number) => {
     setEventToDeleteId(id);
     setIsDeleteModalOpen(true);
-    setActiveMenuId(null); // Close menu
+    setActiveMenuId(null);
   };
 
   const confirmDelete = () => {
     if (eventToDeleteId) {
       setEvents(events.filter(e => e.id !== eventToDeleteId));
+      // If we are deleting the event currently being viewed/edited
       if (selectedEvent?.id === eventToDeleteId) {
         setView('list');
         setSelectedEvent(null);
@@ -158,28 +188,36 @@ const EventsDashboard: React.FC = () => {
     setEventToDeleteId(null);
   };
 
-  const openCreateModal = () => {
+  // Switch to Form View for Creation
+  const handleCreateClick = () => {
     setFormData({ ...initialFormState, id: Date.now() });
     setIsEditMode(false);
-    setIsFormModalOpen(true);
+    setView('form');
   };
 
-  const openEditModal = (event: Event) => {
+  // Switch to Form View for Editing
+  const handleEditClick = (event: Event) => {
     setFormData(event);
     setIsEditMode(true);
-    setIsFormModalOpen(true);
-    setActiveMenuId(null); // Close menu
+    // Ensure selected event is set if coming from list view 3-dots
+    setSelectedEvent(event);
+    setActiveMenuId(null);
+    setView('form');
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isEditMode) {
       setEvents(events.map(ev => (ev.id === formData.id ? formData : ev)));
+      // Update the selected event so detail view shows new data if we return there
       if (selectedEvent?.id === formData.id) setSelectedEvent(formData);
+      // Return to detail view if we were editing
+      setView('detail');
     } else {
       setEvents([formData, ...events]);
+      // Return to list view after creation
+      setView('list');
     }
-    setIsFormModalOpen(false);
   };
 
   const toggleMenu = (e: React.MouseEvent, id: number) => {
@@ -199,16 +237,17 @@ const EventsDashboard: React.FC = () => {
   return (
     <div className="min-h-screen text-gray-800">
       
-      {/* Header */}
+      {/* Dynamic Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h3 className="font-bold text-gray-900 tracking-tight">Events Management</h3>
+          <h3 className="text-2xl font-bold text-gray-900 tracking-tight">Events Management</h3>
           <p className="text-gray-500 text-sm mt-1">Create and manage your yoga schedules.</p>
         </div>
+        {/* Only show Create button on List view */}
         {view === 'list' && (
           <button
-            onClick={openCreateModal}
-            className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md font-medium transition-all text-sm active:scale-95"
+            onClick={handleCreateClick}
+            className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg font-medium transition-all text-sm active:scale-95 shadow-sm hover:shadow-md"
           >
             <Plus className="w-5 h-5" /> Create Event
           </button>
@@ -220,7 +259,7 @@ const EventsDashboard: React.FC = () => {
         <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
 
           {/* Filters Bar */}
-          <div className="bg-white p-4 rounded-md shadow-xs flex flex-col sm:flex-row gap-4 justify-between items-center">
+          <div className="bg-white p-4 rounded-xl shadow-xs flex flex-col sm:flex-row gap-4 justify-between items-center">
             <div className="flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
               {['All', 'Upcoming', 'Completed'].map(status => (
                 <button
@@ -239,23 +278,22 @@ const EventsDashboard: React.FC = () => {
                 placeholder="Search events..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-gray-50/50 focus:bg-white transition-colors"
               />
             </div>
           </div>
 
           {/* TABLE VIEW */}
-          <div className="bg-white rounded-md shadow-xs"> {/* overflow-visible allows dropdown to pop out if needed, though relative positioning usually keeps it inside */}
-            <div className="overflow-x-auto min-h-[400px]"> {/* Added min-h to ensure dropdowns near bottom have space if container scrolls */}
+          <div className="bg-white rounded-xl shadow-xs overflow-hidden">
+            <div className="overflow-x-auto min-h-[400px]">
               <table className="w-full text-left text-sm min-w-[800px]">
                 <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-500">
                   <tr>
                     <th className="px-6 py-4 font-semibold">Event Name</th>
-                    {/* Changed Header from 'Date & Time' to 'Date' */}
                     <th className="px-6 py-4 font-semibold">Date</th>
                     <th className="px-6 py-4 font-semibold">Location</th>
                     <th className="px-6 py-4 font-semibold">Status</th>
-                    <th className="px-6 py-4 font-semibold text-right">Attendees</th>
+                    <th className="px-6 py-4 font-semibold text-right">Interested</th>
                     <th className="px-6 py-4 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
@@ -264,25 +302,24 @@ const EventsDashboard: React.FC = () => {
                     <tr key={event.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="font-medium text-gray-900">{event.title}</div>
-                        <div className="text-xs text-purple-600 bg-purple-50 inline-block px-2 py-0.5 rounded mt-1">{event.category}</div>
+                        <div className="text-xs text-purple-600 bg-purple-50 inline-block px-2 py-0.5 rounded mt-1 font-medium">{event.category}</div>
                       </td>
                       <td className="px-6 py-4 text-gray-600">
-                        {/* ONLY showing Date now, removed Time */}
                         <div className="flex items-center gap-2">
-                           <Calendar className="w-3 h-3 text-gray-400"/>
+                           <Calendar className="w-3.5 h-3.5 text-gray-400"/>
                            {event.date}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-gray-600">
-                        <div className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {event.location}</div>
+                        <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-gray-400" /> {event.location}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>{event.status}</span>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusColor(event.status)}`}>{event.status}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                          <div className="text-gray-600 mb-1">{event.attendees}/{event.capacity}</div>
-                          <div className="w-24 ml-auto bg-gray-100 rounded-full h-1">
-                            <div className="bg-purple-500 h-1 rounded-full" style={{ width: `${(event.attendees / event.capacity) * 100}%` }}></div>
+                          <div className="flex items-center justify-end gap-1.5 text-gray-700 font-medium">
+                            <Users className="w-4 h-4 text-purple-500" />
+                            {event.interested}
                           </div>
                       </td>
                       
@@ -299,24 +336,25 @@ const EventsDashboard: React.FC = () => {
                         {activeMenuId === event.id && (
                           <div 
                             ref={menuRef}
-                            className="absolute right-12 top-2 w-32 bg-white rounded-lg shadow-xl border border-gray-100 z-50 animate-in fade-in zoom-in-95 duration-200"
+                            className="absolute right-12 top-2 w-40 bg-white rounded-xl shadow-xl border border-gray-100 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
                           >
                             <div className="py-1">
                               <button 
                                 onClick={() => handleViewDetail(event)}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
                               >
-                                <Eye className="w-4 h-4 text-gray-400" /> View
+                                <Eye className="w-4 h-4 text-gray-400" /> View Details
                               </button>
                               <button 
-                                onClick={() => openEditModal(event)}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                onClick={() => handleEditClick(event)}
+                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
                               >
-                                <Edit className="w-4 h-4 text-gray-400" /> Edit
+                                <Edit className="w-4 h-4 text-gray-400" /> Edit Event
                               </button>
+                              <div className="h-px bg-gray-100 my-1"></div>
                               <button 
                                 onClick={() => openDeleteModal(event.id)}
-                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
                               >
                                 <Trash2 className="w-4 h-4" /> Delete
                               </button>
@@ -334,92 +372,252 @@ const EventsDashboard: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          </div>
+            
+            {/* Pagination Controls Footer */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-100 bg-gray-50/50">
+               <p className="text-sm text-gray-500">
+                 Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to <span className="font-medium">{Math.min(indexOfLastItem, filteredEvents.length)}</span> of <span className="font-medium">{filteredEvents.length}</span> results
+               </p>
+               
+               <div className="flex items-center gap-2">
+                 <button 
+                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                   disabled={currentPage === 1}
+                   className="p-2 border border-gray-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed bg-white shadow-sm"
+                 >
+                   <ChevronLeft className="w-4 h-4" />
+                 </button>
 
-          {/* Numbered Pagination Controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
-             <p className="text-sm text-gray-500">
-               Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to <span className="font-medium">{Math.min(indexOfLastItem, filteredEvents.length)}</span> of <span className="font-medium">{filteredEvents.length}</span> results
-             </p>
-             
-             <div className="flex items-center gap-2">
-               <button 
-                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                 disabled={currentPage === 1}
-                 className="p-2 border border-gray-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed bg-white"
-               >
-                 <ChevronLeft className="w-4 h-4" />
-               </button>
+                 <div className="flex items-center gap-1">
+                   {pageNumbers.map(number => (
+                     <button
+                       key={number}
+                       onClick={() => setCurrentPage(number)}
+                       className={`w-8 h-8 flex items-center justify-center text-sm font-medium rounded-lg transition-all ${
+                         currentPage === number 
+                           ? 'bg-purple-600 text-white shadow-md' 
+                           : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                       }`}
+                     >
+                       {number}
+                     </button>
+                   ))}
+                 </div>
 
-               <div className="flex items-center gap-1">
-                 {pageNumbers.map(number => (
-                   <button
-                     key={number}
-                     onClick={() => setCurrentPage(number)}
-                     className={`w-8 h-8 flex items-center justify-center text-sm font-medium rounded-lg transition-colors ${
-                       currentPage === number 
-                         ? 'bg-purple-600 text-white' 
-                         : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                     }`}
-                   >
-                     {number}
-                   </button>
-                 ))}
+                 <button 
+                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                   disabled={currentPage === totalPages}
+                   className="p-2 border border-gray-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed bg-white shadow-sm"
+                 >
+                   <ChevronRight className="w-4 h-4" />
+                 </button>
                </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-               <button 
-                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                 disabled={currentPage === totalPages}
-                 className="p-2 border border-gray-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed bg-white"
-               >
-                 <ChevronRight className="w-4 h-4" />
-               </button>
+      {/* --- VIEW: FORM (Create / Edit) --- */}
+      {view === 'form' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <button 
+            onClick={() => setView(isEditMode ? 'detail' : 'list')} // Return to list if creating, detail if editing
+            className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-medium mb-6 group transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> 
+            {isEditMode ? 'Cancel Edit' : 'Back to List'}
+          </button>
+
+          <div className="bg-white rounded-xl shadow-xs overflow-hidden">
+             {/* Form Header */}
+             <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
+                <h4 className="text-xl font-bold text-gray-900">{isEditMode ? 'Edit Event Details' : 'Create New Event'}</h4>
+                <p className="text-gray-500 text-sm mt-1">Fill in the information below to {isEditMode ? 'update the' : 'add a new'} yoga session.</p>
+             </div>
+
+             {/* Form Body */}
+             <div className="p-8">
+                <form id="eventForm" onSubmit={handleFormSubmit} className="space-y-6">
+                  {/* Title Section */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Event Title</label>
+                    <input 
+                      required 
+                      type="text" 
+                      placeholder="e.g. Sunrise Yoga Flow"
+                      value={formData.title} 
+                      onChange={e => setFormData({...formData, title: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all" 
+                    />
+                  </div>
+
+                  {/* Grid 1: Date & Category */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                      <input 
+                        required 
+                        type="date" 
+                        value={formData.date} 
+                        onChange={e => setFormData({...formData, date: e.target.value})} 
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all" 
+                      />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                        <select 
+                          value={formData.category} 
+                          onChange={e => setFormData({...formData, category: e.target.value as any})} 
+                          className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-white"
+                        >
+                          <option value="Class">Class</option>
+                          <option value="Workshop">Workshop</option>
+                          <option value="Retreat">Retreat</option>
+                          <option value="Webinar">Webinar</option>
+                        </select>
+                    </div>
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input 
+                          required 
+                          type="text" 
+                          placeholder="e.g. Main Studio or Online"
+                          value={formData.location} 
+                          onChange={e => setFormData({...formData, location: e.target.value})} 
+                          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all" 
+                        />
+                      </div>
+                  </div>
+
+                  {/* Grid 2: Price & Interested */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Price</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                        <input 
+                          required 
+                          type="text" 
+                          placeholder="0.00"
+                          value={formData.price.replace('$', '')} 
+                          onChange={e => setFormData({...formData, price: `$${e.target.value}`})} 
+                          className="w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all" 
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Interested Count</label>
+                      <input 
+                        required 
+                        type="number" 
+                        value={formData.interested} 
+                        onChange={e => setFormData({...formData, interested: parseInt(e.target.value) || 0})} 
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all" 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                    <textarea 
+                      rows={5} 
+                      placeholder="Describe the event details..."
+                      value={formData.description} 
+                      onChange={e => setFormData({...formData, description: e.target.value})} 
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all resize-y"
+                    ></textarea>
+                  </div>
+                </form>
+             </div>
+
+             {/* Form Footer */}
+             <div className="px-8 py-6 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3">
+                 <button 
+                   type="button"
+                   onClick={() => setView(isEditMode ? 'detail' : 'list')} 
+                   className="px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-white hover:border-gray-400 transition-all bg-white"
+                 >
+                   Cancel
+                 </button>
+                 <button 
+                   type="submit" 
+                   form="eventForm" 
+                   className="px-6 py-2.5 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-all flex items-center gap-2 shadow-sm"
+                 >
+                   <Save className="w-4 h-4" />
+                   {isEditMode ? 'Save Changes' : 'Create Event'}
+                 </button>
              </div>
           </div>
         </div>
       )}
 
-      {/* --- VIEW: DETAIL (No Changes) --- */}
+      {/* --- VIEW: DETAIL --- */}
       {view === 'detail' && selectedEvent && (
-        <div className="animate-in fade-in slide-in-from-right-4 duration-300 max-w-5xl mx-auto">
-          <button onClick={() => setView('list')} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-medium mb-6">
-            <ArrowLeft className="w-4 h-4" /> Back to List
+        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+          <button onClick={() => setView('list')} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 font-medium mb-6 group transition-colors">
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to List
           </button>
 
-          <div className="bg-white rounded-md shadow-xs">
-            <div className="h-28 bg-gradient-to-r from-purple-600 to-indigo-600 p-6 sm:p-8 flex flex-col justify-end text-white">
+          <div className="bg-white rounded-xl shadow-xs overflow-hidden">
+            {/* Detail Header */}
+            <div className="h-32 bg-gradient-to-r from-purple-700 to-indigo-700 p-6 sm:p-8 flex flex-col justify-end text-white">
                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                  <div>
-                   <h3 className="text-3xl font-bold">{selectedEvent.title}</h3>
+                   <h3 className="text-3xl font-bold tracking-tight">{selectedEvent.title}</h3>
                    <div className="flex flex-wrap gap-4 mt-2 text-purple-100 text-sm">
-                     <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {selectedEvent.location}</span>
-                     <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {selectedEvent.date}</span>
+                     <span className="flex items-center gap-1.5 bg-white/10 px-2 py-0.5 rounded"><MapPin className="w-3.5 h-3.5" /> {selectedEvent.location}</span>
+                     <span className="flex items-center gap-1.5 bg-white/10 px-2 py-0.5 rounded"><Calendar className="w-3.5 h-3.5" /> {selectedEvent.date}</span>
                    </div>
                  </div>
                  <div className="flex gap-3">
-                   <button onClick={() => openEditModal(selectedEvent)} className="bg-white text-purple-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
+                   <button 
+                     onClick={() => handleEditClick(selectedEvent)} 
+                     className="bg-white text-purple-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
+                   >
                      <Edit className="w-4 h-4" /> Edit
                    </button>
-                   <button onClick={() => openDeleteModal(selectedEvent.id)} className="bg-white/10 text-white border border-white/20 px-4 py-2 rounded-lg font-medium text-sm hover:bg-white/20 transition-colors flex items-center gap-2">
+                   <button 
+                     onClick={() => openDeleteModal(selectedEvent.id)} 
+                     className="bg-white/10 text-white border border-white/20 px-4 py-2 rounded-lg font-medium text-sm hover:bg-white/20 transition-colors flex items-center gap-2 backdrop-blur-sm"
+                   >
                      <Trash2 className="w-4 h-4" /> Delete
                    </button>
                  </div>
                </div>
             </div>
             
-            <div className="p-6 sm:p-8 space-y-6">
+            {/* Detail Body */}
+            <div className="p-6 sm:p-8 space-y-8">
               <div>
-                <h3 className="text-lg! font-bold text-gray-900">Description</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">About this Event</h3>
                 <p className="text-gray-600 leading-relaxed">{selectedEvent.description}</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <div className="text-sm text-gray-500 mb-1">Time</div>
-                  <div className="font-semibold text-gray-900 flex items-center gap-2"><Clock className="w-4 h-4 text-purple-600"/> {selectedEvent.time}</div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="p-5 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
+                  <div className="text-sm text-gray-500 mb-1 font-medium">Time</div>
+                  <div className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-purple-600"/> {selectedEvent.time}
+                  </div>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <div className="text-sm text-gray-500 mb-1">Price</div>
-                  <div className="font-semibold text-gray-900 flex items-center gap-2"><DollarSign className="w-4 h-4 text-green-600"/> {selectedEvent.price}</div>
+                <div className="p-5 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
+                  <div className="text-sm text-gray-500 mb-1 font-medium">Price</div>
+                  <div className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-green-600"/> {selectedEvent.price}
+                  </div>
+                </div>
+                <div className="p-5 bg-gray-50 rounded-xl border border-gray-100 flex flex-col">
+                  <div className="text-sm text-gray-500 mb-1 font-medium">Interest</div>
+                  <div className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <Heart className="w-5 h-5 text-red-500 fill-red-500"/> {selectedEvent.interested} People
+                  </div>
                 </div>
               </div>
             </div>
@@ -427,67 +625,28 @@ const EventsDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* --- MODAL: CREATE / EDIT --- */}
-      {isFormModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900">{isEditMode ? 'Edit Event' : 'Create New Event'}</h3>
-              <button onClick={() => setIsFormModalOpen(false)} className="p-1 text-gray-400 hover:bg-gray-100 rounded-full">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="overflow-y-auto p-6">
-              <form id="eventForm" onSubmit={handleFormSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Event Name</label>
-                  <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                    <input required type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" />
-                  </div>
-                  <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                      <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value as any})} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
-                        <option value="Class">Class</option>
-                        <option value="Workshop">Workshop</option>
-                        <option value="Retreat">Retreat</option>
-                        <option value="Webinar">Webinar</option>
-                      </select>
-                  </div>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                    <input required type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <textarea rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"></textarea>
-                </div>
-              </form>
-            </div>
-            <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3">
-               <button onClick={() => setIsFormModalOpen(false)} className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-white">Cancel</button>
-               <button type="submit" form="eventForm" className="flex-1 px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700">{isEditMode ? 'Save Changes' : 'Create Event'}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* --- MODAL: DELETE CONFIRMATION --- */}
+      {/* --- MODAL: DELETE CONFIRMATION (Still implemented as modal for safety/UX) --- */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center border border-gray-100">
+            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 border border-red-100">
                <AlertTriangle className="w-6 h-6" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Event?</h3>
-            <p className="text-gray-500 text-sm mb-6">Are you sure you want to delete this event? This action cannot be undone.</p>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">Are you sure you want to delete this event? This action cannot be undone.</p>
             <div className="flex gap-3">
-              <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50">Cancel</button>
-              <button onClick={confirmDelete} className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700">Delete</button>
+              <button 
+                onClick={() => setIsDeleteModalOpen(false)} 
+                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete} 
+                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>

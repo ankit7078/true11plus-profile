@@ -1,21 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Bell,
   Plus,
   Search,
-  X,
   ChevronRight,
-  FileText,
+  ChevronLeft,
   Filter,
   ArrowLeft,
   Calendar,
   Clock,
   ChevronDown,
   Check,
-  Trash2
+  Trash2,
+  Eye,
+  Edit,
+  Save,
+  MoreVertical,
+  AlertTriangle, // Icon for delete warning
+  Bell
 } from 'lucide-react';
 
-// --- Types ---
+// --- 1. TypeScript Interfaces ---
+
 type CategoryType = 'Academic' | 'Exam' | 'Campus' | 'Admissions';
 
 interface NewsItem {
@@ -29,425 +34,520 @@ interface NewsItem {
   isPinned?: boolean;
 }
 
+// --- 2. Initial State & Mock Data ---
+
+const initialFormState: NewsItem = {
+  id: 0,
+  title: '',
+  category: 'Academic',
+  date: new Date().toISOString().split('T')[0],
+  readTime: '2 min read',
+  author: 'Admin',
+  content: '',
+  isPinned: false
+};
+
 const NewsDashboard: React.FC = () => {
-  // --- Mock Data ---
+  // --- Data State (Expanded for Pagination) ---
   const [news, setNews] = useState<NewsItem[]>([
-    {
-      id: 1,
-      title: "Final Semester Exam Schedule Released",
-      category: "Exam",
-      date: "Jan 05, 2025",
-      readTime: "2 min read",
-      author: "Examination Cell",
-      content: "The datesheet for the Spring 2025 final examinations has been uploaded. Students are requested to check the portal immediately. Any discrepancies regarding subject codes or timing must be reported to the Examination Cell by Jan 10th. Please ensure you have your admit cards downloaded before the commencement of practicals.",
-      isPinned: true
-    },
-    {
-      id: 2,
-      title: "New Yoga Therapy Certification Course",
-      category: "Academic",
-      date: "Jan 08, 2025",
-      readTime: "4 min read",
-      author: "Dr. Aditi Verma",
-      content: "We are excited to introduce a 6-month specialized course in Yoga Therapy starting this March. This course is designed for advanced practitioners who wish to apply yoga for healing common ailments. Topics include therapeutic sequencing, anatomy of injury, and case studies. Enrollments are open now via the student dashboard.",
-      isPinned: false
-    },
-    {
-      id: 3,
-      title: "Campus Library Renovation Notice",
-      category: "Campus",
-      date: "Dec 28, 2024",
-      readTime: "1 min read",
-      author: "Admin Dept",
-      content: "The central library will remain closed for maintenance and digitization work from Jan 15th to Jan 20th. During this period, the physical reading rooms will be inaccessible. However, all digital resources, e-books, and research journals remain accessible through the library portal 24/7.",
-      isPinned: false
-    },
-    {
-      id: 4,
-      title: "Admissions Open for Batch 2025",
-      category: "Admissions",
-      date: "Jan 02, 2025",
-      readTime: "3 min read",
-      author: "Registrar Office",
-      content: "Applications are now invited for the 200-hour and 500-hour Yoga Teacher Training programs for the upcoming academic year. We have introduced new scholarships for meritorious students. Early bird discounts apply until Feb 1st. Visit the admissions block for brochures.",
-      isPinned: false
-    }
+    { id: 1, title: "Final Semester Exam Schedule Released", category: "Exam", date: "2025-01-05", readTime: "2 min read", author: "Examination Cell", content: "The datesheet for the Spring 2025 final examinations has been uploaded.", isPinned: true },
+    { id: 2, title: "New Yoga Therapy Certification Course", category: "Academic", date: "2025-01-08", readTime: "4 min read", author: "Dr. Aditi Verma", content: "We are excited to introduce a 6-month specialized course.", isPinned: false },
+    { id: 3, title: "Campus Library Renovation Notice", category: "Campus", date: "2024-12-28", readTime: "1 min read", author: "Admin Dept", content: "The central library will remain closed for maintenance.", isPinned: false },
+    { id: 4, title: "Admissions Open for Batch 2025", category: "Admissions", date: "2025-01-02", readTime: "3 min read", author: "Registrar Office", content: "Applications are now invited for the 200-hour program.", isPinned: false },
+    { id: 5, title: "Guest Lecture: Ancient Vedas", category: "Academic", date: "2025-01-12", readTime: "2 min read", author: "Prof. Sharma", content: "Join us for an enlightening session.", isPinned: false },
+    { id: 6, title: "Cafeteria Menu Update", category: "Campus", date: "2025-01-10", readTime: "1 min read", author: "Admin Dept", content: "New healthy vegan options added.", isPinned: false },
+    { id: 7, title: "Scholarship Results Announced", category: "Admissions", date: "2025-01-15", readTime: "2 min read", author: "Registrar Office", content: "Merit list is live on the portal.", isPinned: true },
+    { id: 8, title: "Sports Day Registration", category: "Campus", date: "2025-01-20", readTime: "2 min read", author: "Sports Comm", content: "Register for the annual track and field events.", isPinned: false },
+    { id: 9, title: "Research Grant Opportunities", category: "Academic", date: "2025-01-22", readTime: "5 min read", author: "Dean", content: "Apply for international research grants.", isPinned: false },
+    { id: 10, title: "Hostel Maintenance Schedule", category: "Campus", date: "2025-01-25", readTime: "1 min read", author: "Warden", content: "Block A maintenance scheduled for Saturday.", isPinned: false },
+    { id: 11, title: "Alumni Meet 2025", category: "Campus", date: "2025-02-01", readTime: "3 min read", author: "Alumni Cell", content: "Welcome back our graduated batches.", isPinned: false },
+    { id: 12, title: "PhD Entrance Exam Dates", category: "Exam", date: "2025-02-05", readTime: "2 min read", author: "Exam Cell", content: "Entrance exam dates have been postponed.", isPinned: false },
   ]);
 
+  // --- View State ---
+  const [viewMode, setViewMode] = useState<'list' | 'detail' | 'form'>('list');
+
+  // --- UI State ---
   const [filter, setFilter] = useState<CategoryType | 'All'>('All');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
-
+  
+  // Dropdown & Modal State
+  const [activeDropdownId, setActiveDropdownId] = useState<number | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // NEW: Delete Modal State
+  const [itemToDelete, setItemToDelete] = useState<NewsItem | null>(null); // NEW: Item to delete
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Form State
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<NewsItem>(initialFormState);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // --- Logic ---
+
+  // Handle Outside Click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsFilterOpen(false);
-      }
+      const target = event.target as Element;
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) setIsFilterOpen(false);
+      if (activeDropdownId !== null && !target.closest('.action-dropdown-container')) setActiveDropdownId(null);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [activeDropdownId]);
 
+  // Filter Logic
   const filteredNews = news.filter(item => {
     const matchesFilter = filter === 'All' || item.category === filter;
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this update?")) {
-      setNews(news.filter(item => item.id !== id));
-      if (selectedNews?.id === id) setSelectedNews(null);
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredNews.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredNews.length / itemsPerPage);
+
+  // Generate Page Numbers Array [1, 2, 3...]
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+  const handleNextPage = () => { if (currentPage < totalPages) setCurrentPage(prev => prev + 1); };
+  const handlePrevPage = () => { if (currentPage > 1) setCurrentPage(prev => prev - 1); };
+
+  // Handle Page Reset on Filter Change or Item Deletion
+  useEffect(() => { 
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    } else if (totalPages === 0) {
+      setCurrentPage(1);
+    }
+  }, [filter, searchQuery, news.length, totalPages, currentPage]);
+
+  // --- Actions ---
+
+  const handleBackToList = () => {
+    setViewMode('list');
+    setSelectedNews(null);
+    setFormData(initialFormState);
+    setActiveDropdownId(null);
+  };
+
+  const handleView = (item: NewsItem) => {
+    setSelectedNews(item);
+    setViewMode('detail');
+    setActiveDropdownId(null);
+  };
+
+  const handleCreateClick = () => {
+    setFormData({ ...initialFormState, date: new Date().toISOString().split('T')[0] });
+    setIsEditing(false);
+    setViewMode('form');
+  };
+
+  const handleEditClick = (item: NewsItem) => {
+    setFormData({ ...item });
+    setIsEditing(true);
+    setViewMode('form');
+    setActiveDropdownId(null);
+  };
+
+  // 1. Open Delete Modal
+  const handleDeleteRequest = (item: NewsItem) => {
+    setItemToDelete(item);
+    setIsDeleteModalOpen(true);
+    setActiveDropdownId(null);
+  };
+
+  // 2. Confirm Delete
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      setNews(prev => prev.filter(item => item.id !== itemToDelete.id));
+      if (selectedNews?.id === itemToDelete.id) {
+        handleBackToList(); // If we deleted the item we were viewing, go back
+      }
+      setItemToDelete(null);
+      setIsDeleteModalOpen(false);
     }
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleSaveForm = (e: React.FormEvent) => {
     e.preventDefault();
-    const newItem: NewsItem = {
-      id: Date.now(),
-      title: "New Announcement",
-      category: "Academic",
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      readTime: "1 min read",
-      author: "Admin",
-      content: "This is a newly created update. Details will be added shortly."
-    };
-    setNews([newItem, ...news]);
-    setIsCreateModalOpen(false);
+    if (isEditing) {
+      const updatedNews = news.map(item => item.id === formData.id ? formData : item);
+      setNews(updatedNews);
+      if (selectedNews?.id === formData.id) setSelectedNews(formData);
+    } else {
+      const newItem = { ...formData, id: Date.now() };
+      setNews([newItem, ...news]);
+    }
+    handleBackToList();
   };
 
+  // Styles
   const getCategoryStyle = (cat: CategoryType) => {
     switch (cat) {
-      case 'Academic': return 'bg-blue-50 text-blue-700 border-blue-100 ring-blue-500/20';
-      case 'Exam': return 'bg-rose-50 text-rose-700 border-rose-100 ring-rose-500/20';
-      case 'Campus': return 'bg-emerald-50 text-emerald-700 border-emerald-100 ring-emerald-500/20';
-      case 'Admissions': return 'bg-purple-50 text-purple-700 border-purple-100 ring-purple-500/20';
-      default: return 'bg-gray-50 text-gray-700 border-gray-100';
+      case 'Academic': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'Exam': return 'bg-rose-50 text-rose-700 border-rose-200';
+      case 'Campus': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'Admissions': return 'bg-purple-50 text-purple-700 border-purple-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
   const categories = ['All', 'Academic', 'Exam', 'Campus', 'Admissions'];
 
-  return (
-    <div className="min-h-screen text-gray-800 p-4">
-      <div className="">
+  // --- SUB-COMPONENT: DELETE MODAL ---
+  const DeleteModal = () => {
+    if (!isDeleteModalOpen || !itemToDelete) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transform scale-100 transition-all">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Announcement?</h3>
+            <p className="text-gray-500 text-sm mb-6">
+              Are you sure you want to delete <span className="font-semibold text-gray-900">"{itemToDelete.title}"</span>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 w-full">
+              <button 
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg shadow-red-200 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-        {/* --- HEADER --- */}
+  return (
+    <div className="min-h-screen text-gray-800">
+      
+      {/* Include Modal in Render Tree */}
+      <DeleteModal />
+
+      {/* HEADER */}
+      {viewMode === 'list' && (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
             <h3 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">News & Updates</h3>
-            <p className="text-gray-500 mt-1 text-sm md:text-base">Stay informed with the latest institute announcements.</p>
+            <p className="text-gray-500 mt-1 text-sm md:text-base">Manage announcements and notices.</p>
+          </div>
+          <button
+            onClick={handleCreateClick}
+            className="w-full md:w-auto flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl font-semibold shadow-md shadow-purple-200 transition-all transform hover:-translate-y-0.5"
+          >
+            <Plus className="w-5 h-5" /> Post Update
+          </button>
+        </div>
+      )}
+
+      {/* --- VIEW 1: FORM PAGE (Edit/Create) --- */}
+      {viewMode === 'form' && (
+        <div className="animate-in fade-in slide-in-from-right-8 duration-300 max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <button 
+              onClick={handleBackToList} 
+              className="flex items-center text-gray-500 hover:text-purple-600 transition-colors font-medium"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" /> Cancel & Back
+            </button>
+            <h4 className="text-2xl font-bold text-gray-900">
+              {isEditing ? 'Edit Announcement' : 'Create New Announcement'}
+            </h4>
           </div>
 
-          {!selectedNews && (
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="w-full md:w-auto flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-md font-semibold shadow-xs transition-all transform hover:-translate-y-0.5 active:scale-95"
-            >
-              <Plus className="w-5 h-5" /> Post Update
-            </button>
-          )}
-        </div>
-
-        {/* --- MAIN CONTENT AREA --- */}
-        <div className="relative">
-
-          {!selectedNews && (
-            <div className="animate-in fade-in slide-in-from-left-4 duration-300">
-
-              {/* ================= Filters & Search Bar ================= */}
-              <div className="relative mb-8 z-20">
-                <div className="flex flex-col md:flex-row items-center justify-between rounded-md bg-white/90 backdrop-blur-md shadow-xs border border-gray-100 md:border-none">
-
-                  {/* Search Input */}
-                  <div className="flex items-center gap-3 px-4 py-3 w-full md:w-80 border-b md:border-b-0 border-gray-100">
-                    <Search className="w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search announcements..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-transparent outline-none text-sm text-gray-800 placeholder-gray-400 focus:placeholder-gray-300"
+          <div className="bg-white rounded-xl shadow-xs overflow-hidden">
+            <form onSubmit={handleSaveForm} className="p-8 space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Headline Title</label>
+                  <input 
+                    required 
+                    type="text" 
+                    value={formData.title} 
+                    onChange={(e) => setFormData({...formData, title: e.target.value})} 
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all text-sm " 
+                    placeholder="Enter the title of the news..." 
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category</label>
+                    <select 
+                      value={formData.category} 
+                      onChange={(e) => setFormData({...formData, category: e.target.value as CategoryType})} 
+                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm appearance-none"
+                    >
+                      <option value="Academic">Academic</option>
+                      <option value="Exam">Exam</option>
+                      <option value="Campus">Campus</option>
+                      <option value="Admissions">Admissions</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Publish Date</label>
+                    <input 
+                      type="date" 
+                      value={formData.date} 
+                      onChange={(e) => setFormData({...formData, date: e.target.value})} 
+                      className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm" 
                     />
                   </div>
-
-                  {/* Filter Dropdown Trigger */}
-                  <div className="relative w-full md:w-auto" ref={dropdownRef}>
-                    <button
-                      onClick={() => setIsFilterOpen(!isFilterOpen)}
-                      className="flex items-center justify-between gap-3 px-5 py-3 w-full md:w-auto hover:bg-gray-50 transition-colors md:rounded-r-xl"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-md bg-purple-50 text-purple-600 shrink-0">
-                          <Filter className="w-4 h-4" />
-                        </div>
-                        <div className="text-left">
-                          <span className="block text-xs text-gray-400 md:hidden">Filter by</span>
-                          <span className="block text-sm font-bold text-gray-900">{filter}</span>
-                        </div>
-                      </div>
-                      <ChevronDown className={`w-4 h-4 text-purple-400 transition-transform duration-200 ${isFilterOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {/* The Dropdown Menu */}
-                    {isFilterOpen && (
-                      <div className="absolute top-full right-0 mt-2 w-full md:w-56 bg-white rounded-md shadow-lg border border-gray-100 animate-in fade-in zoom-in-95 duration-200 overflow-hidden z-30">
-                        {categories.map((cat) => (
-                          <button
-                            key={cat}
-                            onClick={() => {
-                              setFilter(cat as any);
-                              setIsFilterOpen(false);
-                            }}
-                            className={`
-                                w-full px-4 py-2.5 flex items-center justify-between text-sm transition-colors
-                                ${filter === cat ? 'bg-purple-50 text-purple-700 font-semibold' : 'text-gray-600 hover:bg-purple-50 hover:text-purple-500'}
-                              `}
-                          >
-                            {cat}
-                            {filter === cat && <Check className="w-4 h-4" />}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Content Details</label>
+                  <textarea 
+                    rows={8} 
+                    value={formData.content} 
+                    onChange={(e) => setFormData({...formData, content: e.target.value})} 
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none text-sm  leading-relaxed" 
+                    placeholder="Write the full content of your update here..."
+                  ></textarea>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-lg border border-purple-100">
+                  <input 
+                    type="checkbox" 
+                    id="pinToggle" 
+                    checked={formData.isPinned || false} 
+                    onChange={(e) => setFormData({...formData, isPinned: e.target.checked})} 
+                    className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 border-gray-300 cursor-pointer" 
+                  />
+                  <label htmlFor="pinToggle" className="text-sm font-medium text-purple-900 cursor-pointer select-none">
+                    Pin this update to the top of the dashboard
+                  </label>
                 </div>
               </div>
+              <div className="pt-6 border-t border-gray-100 flex items-center justify-end gap-3">
+                <button 
+                  type="button" 
+                  onClick={handleBackToList} 
+                  className="px-6 py-2.5 text-gray-700 font-semibold hover:bg-gray-100 rounded-lg border border-gray-300 transition-colors"
+                >
+                  Discard Changes
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-6 py-2.5 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 shadow-md shadow-purple-200 transition-all flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" /> {isEditing ? 'Update News' : 'Publish News'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
+      {/* --- VIEW 2: LIST TABLE --- */}
+      {viewMode === 'list' && (
+        <div className="animate-in fade-in slide-in-from-left-4 duration-300">
+          
+          {/* Filters & Search */}
+          <div className="relative mb-6 z-20">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search announcements..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm transition-all shadow-xs"
+                />
+              </div>
 
-              {/* News Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-0">
-                {filteredNews.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedNews(item)}
-                    className="group bg-white rounded-md shadow-xs hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden cursor-pointer"
-                  >
-
-                    {/* Card Header */}
-                    <div className="p-5 md:p-6 pb-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <span className={`px-2.5 py-1 rounded-full !text-xs tracking-wider font-bold border ${getCategoryStyle(item.category)}`}>
-                          {item.category}
-                        </span>
-                        {item.isPinned && (
-                          <div className="bg-orange-50 text-orange-600 p-1.5 rounded-full ring-1 ring-orange-100 animate-pulse">
-                            <Bell className="w-3.5 h-3.5 fill-current" />
-                          </div>
-                        )}
-                      </div>
-                      <h4 className="text-lg font-bold text-gray-900 leading-snug mb-3 group-hover:text-purple-600 transition-colors line-clamp-2">
-                        {item.title}
-                      </h4>
-                      <p className="text-gray-500 !text-sm line-clamp-3 leading-relaxed">
-                        {item.content}
-                      </p>
-                    </div>
-
-                    {/* Spacer */}
-                    <div className="flex-1"></div>
-
-                    {/* Card Footer */}
-                    <div className="px-5 md:px-6 pb-5 pt-3 mt-2 flex items-center justify-between border-t border-gray-50">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-semibold text-gray-900">{item.author}</span>
-                        <span className="text-xs text-gray-400 mt-0.5">{item.date}</span>
-                      </div>
-
-                      <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
-                        <ChevronRight className="w-4 h-4" />
-                      </div>
-                    </div>
+              <div className="relative w-full md:w-auto" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className="flex items-center justify-between gap-3 px-4 py-2.5 w-full md:w-48 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium text-gray-700">{filter}</span>
                   </div>
-                ))}
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isFilterOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-                {/* Empty State */}
-                {filteredNews.length === 0 && (
-                  <div className="col-span-full py-20 text-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                      <FileText className="w-8 h-8" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900">No updates found</h3>
-                    <p className="text-gray-500">Try adjusting your filters or search query.</p>
+                {isFilterOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-full md:w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-30 overflow-hidden">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => { setFilter(cat as any); setIsFilterOpen(false); }}
+                        className={`w-full px-4 py-2.5 flex items-center justify-between text-sm transition-colors ${filter === cat ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
+                      >
+                        {cat}
+                        {filter === cat && <Check className="w-4 h-4" />}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
             </div>
-          )}
+          </div>
 
-          {/* VIEW 2: DETAIL VIEW */}
-          {selectedNews && (
-            <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 space-y-6 md:space-y-8">
-
-              <div className="bg-white rounded-md shadow-xs p-6 space-y-6">
-                <div className="space-y-6">
-
-                  <div className='flex items-start justify-between gap-4'>
-                    {/* Title */}
-                    <h3 className="text-xl md:text-3xl font-bold text-gray-900 leading-tight max-w-4xl">
-                      {selectedNews.title}
-                    </h3>
-                    <button
-                      onClick={() => handleDelete(selectedNews.id)}
-                      className="shrink-0 flex items-center justify-center w-10 h-10 md:w-auto md:h-auto p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all font-medium border border-transparent hover:border-red-100"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-
-                  {/* Category & Date Pills */}
-                  <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                    <span className={`px-3 py-1 rounded-full text-[10px] md:text-xs font-bold border tracking-wide shadow-xs ${getCategoryStyle(selectedNews.category)}`}>
-                      {selectedNews.category}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-[10px] md:text-xs font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-100 shadow-xs">
-                      <Calendar className="w-3.5 h-3.5 text-purple-400" /> {selectedNews.date}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-[10px] md:text-xs font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-100 shadow-xs">
-                      <Clock className="w-3.5 h-3.5 text-purple-400" /> {selectedNews.readTime}
-                    </span>
-                  </div>
-                </div>
-
-                {/* --- Content Section --- */}
-                <div>
-                  <div className="prose prose-base md:prose-lg prose-indigo text-gray-600 leading-relaxed pt-2 md:pt-4">
-                    {/* Drop Cap styling for first letter */}
-                    <p className="first-letter:text-4xl md:first-letter:text-5xl first-letter:font-bold first-letter:text-purple-800 first-letter:float-left first-letter:mr-2 md:first-letter:mr-3 first-letter:mt-[-4px] md:first-letter:mt-[-6px]">
-                      {selectedNews.content}
-                    </p>
-
-                    <div className="my-6 md:my-8 p-4 md:p-6 bg-purple-50/50 rounded-xl border-l-4 border-purple-500 text-purple-800 italic text-sm md:text-base">
-                      "Students are advised to regularly check the official portal for any further amendments to this update.
-                      For specific queries, please contact the administration office during working hours."
-                    </div>
-                  </div>
-
-                  {/* --- Attachment Card --- */}
-                  <div className="mt-8 md:mt-12">
-                    <h4 className="text-xs md:text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 md:mb-4 flex items-center gap-2">
-                      <FileText className="w-4 h-4" /> Attached Resources
-                    </h4>
-
-                    <div className="group flex items-center justify-between p-3 md:p-4 bg-purple-50 border border-gray-200 rounded-md hover:bg-white hover:border-purple-200 hover:shadow-xs transition-all duration-300 cursor-pointer">
-
-                      <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
-
-                        {/* Icon Box - responsive sizing */}
-                        <div className="w-10 h-10 shrink-0 rounded-md bg-white border border-gray-200 flex items-center justify-center text-purple-500 shadow-xs group-hover:scale-105 transition-transform duration-300">
-                          <FileText className="w-5 h-5 md:w-6 md:h-6" />
-                        </div>
-
-                        {/* Text Content */}
-                        <div className="flex-1 min-w-0">
-                          {/* Truncate ensures long filenames get '...' on mobile */}
-                          <div className="font-bold text-gray-900 text-sm md:text-base truncate group-hover:text-purple-700 transition-colors">
-                            Official_Notice_2025_Final_Draft.pdf
-                          </div>
-                          <div className="text-xs text-gray-500 font-medium mt-0.5 md:mt-1">
-                            PDF Document • 2.4 MB
+          {/* Table */}
+          <div className="bg-white rounded-xl  shadow-xs overflow-visible">
+            <div className="overflow-x-auto min-h-[400px]">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50/50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4">Title</th>
+                    <th className="px-6 py-4">Category</th>
+                    <th className="px-6 py-4">Date</th>
+                    <th className="px-6 py-4">Author</th>
+                    <th className="px-6 py-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {currentItems.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50/80 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {item.isPinned && <Bell className="w-4 h-4 text-orange-500 fill-orange-500" />}
+                          <div onClick={() => handleView(item)} className="font-semibold text-gray-900 cursor-pointer hover:text-purple-600 transition-colors">
+                            {item.title}
                           </div>
                         </div>
-                      </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getCategoryStyle(item.category)}`}>
+                          {item.category}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-gray-400" /> {item.date}</div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{item.author}</td>
+                      
+                      {/* Action Column with Dropdown */}
+                      <td className="px-6 py-4 text-right relative">
+                        <div className="relative inline-block text-left action-dropdown-container">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdownId(activeDropdownId === item.id ? null : item.id);
+                            }}
+                            className={`p-2 rounded-lg transition-colors ${activeDropdownId === item.id ? 'bg-purple-100 text-purple-700' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
+                          >
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
 
-                      {/* Right Side: Download Button */}
-                      <div className="shrink-0 ml-3 bg-white p-2 md:p-2.5 rounded-full border border-purple-200 text-gray-400 group-hover:text-purple-600 group-hover:border-purple-300 transition-colors shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="7 10 12 15 17 10" />
-                          <line x1="12" x2="12" y1="15" y2="3" />
-                        </svg>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Author Info */}
-              <div className="flex items-center gap-4 bg-white rounded-md shadow-xs border border-gray-100 p-5 md:p-6">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-[2px] shadow-md shrink-0">
-                  <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-indigo-600 font-bold text-base md:text-lg">
-                    {selectedNews.author.charAt(0)}
-                  </div>
-                </div>
-                <div>
-                  <div className="font-bold text-gray-900 text-sm md:text-base">{selectedNews.author}</div>
-                  <div className="text-xs md:text-sm text-gray-500">Authorized Personnel</div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setSelectedNews(null)}
-                className="w-full md:w-auto justify-center group flex items-center gap-2 text-gray-500 hover:text-purple-600 font-medium text-sm transition-colors px-4 py-3 rounded-md hover:bg-white hover:shadow-xs border border-transparent hover:border-gray-100"
-              >
-                <div className="p-1 rounded-md bg-gray-100 group-hover:bg-purple-100 transition-colors">
-                  <ArrowLeft className="w-4 h-4" />
-                </div>
-                Back to Dashboard
-              </button>
-
+                          {activeDropdownId === item.id && (
+                            <div className="absolute right-0 mt-2 w-48 origin-top-right bg-white rounded-xl shadow-xl ring-1 ring-black ring-opacity-5 z-50 animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => handleView(item)}
+                                  className="group flex w-full items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+                                >
+                                  <Eye className="mr-3 h-4 w-4 text-gray-400 group-hover:text-green-600" /> View Details
+                                </button>
+                                <button
+                                  onClick={() => handleEditClick(item)}
+                                  className="group flex w-full items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                >
+                                  <Edit className="mr-3 h-4 w-4 text-gray-400 group-hover:text-blue-600" /> Edit
+                                </button>
+                                <div className="border-t border-gray-100 my-1"></div>
+                                <button
+                                  onClick={() => handleDeleteRequest(item)}
+                                  className="group flex w-full items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                  <Trash2 className="mr-3 h-4 w-4 text-red-400 group-hover:text-red-600" /> Delete
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {currentItems.length === 0 && (
+                    <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">No announcements found.</td></tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
 
+            {/* Numbered Pagination Footer */}
+            {filteredNews.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span className="text-sm text-gray-500">
+                  Showing <span className="font-semibold text-gray-900">{indexOfFirstItem + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(indexOfLastItem, filteredNews.length)}</span> of <span className="font-semibold text-gray-900">{filteredNews.length}</span> entries
+                </span>
+                <div className="flex items-center gap-2">
+                  <button onClick={handlePrevPage} disabled={currentPage === 1} className="p-2 border border-gray-300 rounded-lg bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50"><ChevronLeft className="w-4 h-4" /></button>
+                  
+                  {/* Numbered Buttons */}
+                  <div className="flex items-center gap-1">
+                    {pageNumbers.map(number => (
+                      <button
+                        key={number}
+                        onClick={() => setCurrentPage(number)}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                          currentPage === number 
+                            ? 'bg-purple-600 text-white shadow-xs' 
+                            : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {number}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button onClick={handleNextPage} disabled={currentPage === totalPages} className="p-2 border border-gray-300 rounded-lg bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50"><ChevronRight className="w-4 h-4" /></button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* --- CREATE MODAL --- */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-100 transition-all">
-
-            <div className="flex justify-between items-center p-5 md:p-6 border-b border-gray-100">
-              <h3 className="text-lg md:text-xl font-bold text-gray-900">Post New Update</h3>
-              <button onClick={() => setIsCreateModalOpen(false)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+      {/* --- VIEW 3: DETAIL PAGE --- */}
+      {viewMode === 'detail' && selectedNews && (
+        <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 space-y-6 max-w-5xl mx-auto">
+          <div className="bg-white rounded-xl shadow-xs border border-gray-200 p-6 md:p-10 space-y-8">
+            <div className="space-y-6">
+              <div className='flex items-start justify-between gap-4'>
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight max-w-3xl">
+                  {selectedNews.title}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => handleEditClick(selectedNews)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-xs">
+                    <Edit className="w-4 h-4" /> Edit
+                  </button>
+                  <button onClick={() => handleDeleteRequest(selectedNews)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-xs">
+                    <Trash2 className="w-4 h-4" /> Delete
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold border tracking-wide ${getCategoryStyle(selectedNews.category)}`}>{selectedNews.category}</span>
+                <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 px-3 py-1 rounded-full border border-gray-200"><Calendar className="w-3.5 h-3.5" /> {selectedNews.date}</span>
+                <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 px-3 py-1 rounded-full border border-gray-200"><Clock className="w-3.5 h-3.5" /> {selectedNews.readTime}</span>
+              </div>
             </div>
-
-            <form onSubmit={handleCreate} className="p-5 md:p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1.5">Headline</label>
-                <input required type="text" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm" placeholder="e.g. Holiday Notice" />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Category</label>
-                  <select className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
-                    <option>Academic</option>
-                    <option>Exam</option>
-                    <option>Campus</option>
-                    <option>Admissions</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Date</label>
-                  <input type="date" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1.5">Details</label>
-                <textarea rows={4} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-sm" placeholder="Write your update here..."></textarea>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="pinned" className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300" />
-                <label htmlFor="pinned" className="text-sm text-gray-600 font-medium">Pin to top</label>
-              </div>
-
-              <div className="pt-2 flex gap-3">
-                <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 px-5 py-3 text-gray-600 font-bold hover:bg-gray-50 rounded-xl transition-colors text-sm">Cancel</button>
-                <button type="submit" className="flex-1 px-5 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all transform active:scale-95 text-sm">Publish</button>
-              </div>
-            </form>
+            <div className="prose prose-purple text-gray-600 leading-relaxed pt-6 border-t border-gray-100">
+              <p className="whitespace-pre-line text-lg">{selectedNews.content}</p>
+            </div>
+            <button onClick={handleBackToList} className="flex items-center gap-2 text-gray-600 hover:text-purple-600 font-medium text-sm transition-colors pt-4">
+              <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+            </button>
           </div>
         </div>
       )}

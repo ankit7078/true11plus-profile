@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import StudentList from './StudentList';
-import StudentDetail from './StudentDetail';
+import StudentDetail from './studentdetail/main';
 
 const studentsData = [
     {

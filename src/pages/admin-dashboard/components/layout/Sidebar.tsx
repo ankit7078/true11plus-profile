@@ -6,14 +6,12 @@ import {
   UserCog, // Changed for Mentor
   GraduationCap,
   Award,
-  ClipboardList,
   BookOpen, // Changed for Blog
   Scale, // Changed for Legals
   MessageSquareQuote, // Changed for Enquiry
   CalendarDays, // Changed for Events
   Newspaper, // Changed for New & Update
   LifeBuoy, // Changed for Help & Support
-  ListTodo, // Changed for Mentor Task
   Settings,
   LogOut,
   X,
@@ -127,11 +125,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="space-y-8 flex-1">
             <div>
               <div className="space-y-1.5">
-                <SidebarItem icon={LayoutGrid} label="Overview" tabId="overview" />
+                <SidebarItem icon={LayoutGrid} label="Overview" tabId="profile" />
                 <SidebarItem icon={Users} label="Student" tabId="students" />
-                <SidebarItem icon={ClipboardList} label="Student Task" tabId="tasks" />
                 <SidebarItem icon={UserCog} label="Mentor" tabId="mentor" />
-                <SidebarItem icon={ListTodo} label="Mentor Task" tabId="mentortasks" />
+                {/* <SidebarItem icon={ListTodo} label="Mentor Task" tabId="mentortasks" /> */}
                 <SidebarItem icon={GraduationCap} label="University" tabId="university" />
                 <SidebarItem icon={Award} label="Scholarship" tabId="scholarship" />
                 <SidebarItem icon={BookOpen} label="Blog" tabId="blog" />

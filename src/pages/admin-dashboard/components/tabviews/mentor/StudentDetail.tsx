@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import {
     ArrowLeft, Mail, Phone, Calendar, MapPin,
-    MoreHorizontal,  AlertCircle, FolderOpen, BookOpen,
-    StickyNote, Heart, 
+    MoreHorizontal, AlertCircle, BookOpen,
+    StickyNote,  Clock, Plus, ChevronRight, Check,
+    Flag, Paperclip,  CheckSquare
 } from 'lucide-react';
 
 // ✅ FIX 1: Changed path to './types' (plural) to match your folder structure
 // ✅ FIX 2: Used 'import type' to satisfy strict TypeScript rules
-import type { Mentor } from './type'; 
+import type { Mentor } from './type';
 import { StatusBadge, Avatar } from './UIHelpers';
 
 // ================= TYPES & INTERFACES =================
@@ -24,25 +25,14 @@ interface Task {
     id: number;
     title: string;
     due: string;
-    status: string;
-    priority: "High" | "Medium" | "Low";
+    status: "Pending" | "In Progress" | "Completed";
+    priority?: "High" | "Medium" | "Low";
     description: string;
     checklist: ChecklistItem[];
     attachments: number;
     completedDate: string | null;
-}
-
-interface Post {
-    id: number;
-    author: string;
-    authorAvatar: string | null;
-    timestamp: string;
-    content: string;
-    likes: number;
-    liked: boolean;
-    comments: number[];
-    shares: number;
-    image: string | null;
+    type: "assignment" | "quiz" | "project"; 
+    estTime?: string; // Added for the new design
 }
 
 // --- Component Prop Interfaces ---
@@ -72,6 +62,7 @@ interface TaskDetailViewProps {
 // ================= MAIN COMPONENT =================
 
 const StudentDetail: React.FC<StudentDetailProps> = ({ student, onBack }) => {
+    // Defaulting to 'tasks' so you can see the new design immediately
     const [activeTab, setActiveTab] = useState<string>('tasks');
 
     return (
@@ -130,7 +121,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onBack }) => {
 
                             <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 border-t border-slate-100 mt-4">
                                 <div className="flex items-center gap-3">
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Current Status</p>
+                                    <p className="text-xs! font-semibold uppercase tracking-wider text-slate-400">Current Status</p>
                                     <StatusBadge status={student.status} />
                                 </div>
                                 <div className="hidden sm:block w-px h-8 bg-slate-100"></div>
@@ -153,9 +144,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onBack }) => {
                     <div className="flex items-center gap-8 overflow-x-auto no-scrollbar">
                         <TabButton label="Dashboard" isActive={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
                         <TabButton label="Profile" isActive={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
-                        <TabButton label="Activity Logs" isActive={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
                         <TabButton label="Tasks & Projects" isActive={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} />
-                        <TabButton label="Assignment" isActive={activeTab === 'documents'} onClick={() => setActiveTab('documents')} />
                     </div>
                     <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-md text-xs text-amber-700 mb-2">
                         <StickyNote className="w-3.5 h-3.5" />
@@ -168,8 +157,6 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onBack }) => {
                     {activeTab === 'overview' && <OverviewTab />}
                     {activeTab === 'profile' && <ProfileTab student={student} />}
                     {activeTab === 'tasks' && <TasksTab />}
-                    {activeTab === 'activity' && <ActivityTab studentName={student.name} />}
-                    {activeTab === 'documents' && <DocumentsTab />}
                 </div>
             </div>
         </div>
@@ -180,26 +167,450 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onBack }) => {
 
 const OverviewTab = () => {
     return (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2 space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-[#FCD34D] p-6 rounded-2xl shadow-sm flex flex-col items-center justify-center text-center space-y-1 relative overflow-hidden group hover:shadow-md transition">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-white/20 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
-                        <h4 className="text-slate-800 font-medium text-sm">Total Courses</h4>
-                        <span className="text-4xl font-bold text-slate-900">07</span>
-                        <p className="text-xs text-slate-800/70 font-medium mt-1">2 Electives</p>
+        <div className="space-y-6">
+            {/* Top Stats Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-[#FCD34D] p-6 rounded-md shadow-sm flex flex-col items-center justify-center text-center space-y-1 relative overflow-hidden min-h-[140px]">
+                    <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/20 rounded-full"></div>
+                    <h4 className="text-slate-800 font-medium text-sm">Total Courses</h4>
+                    <span className="text-4xl font-bold text-slate-900">07</span>
+                    <p className="text-xs text-slate-800/80 font-medium mt-1">2 Electives</p>
+                </div>
+                <div className="bg-[#FFCACA] p-6 rounded-md shadow-sm flex flex-col items-center justify-center text-center space-y-1 relative overflow-hidden min-h-[140px]">
+                    <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/20 rounded-full"></div>
+                    <h4 className="text-rose-900 font-medium text-sm">Attendance</h4>
+                    <span className="text-4xl font-bold text-rose-950">60%</span>
+                    <p className="text-xs text-rose-800/80 font-medium mt-1">24% Absent</p>
+                </div>
+                <div className="bg-[#CFD8DC] p-6 rounded-md shadow-sm flex flex-col items-center justify-center text-center space-y-1 relative overflow-hidden min-h-[140px]">
+                    <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/20 rounded-full"></div>
+                    <h4 className="text-slate-700 font-medium text-sm">Requested Leaves</h4>
+                    <span className="text-4xl font-bold text-slate-800">17</span>
+                    <p className="text-xs text-slate-600 font-medium mt-1">11 Approved</p>
+                </div>
+            </div>
+
+            {/* Bottom Section: Classes & Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Today's Classes */}
+                <div className="lg:col-span-2 bg-white p-6 rounded-md shadow-xs">
+                    <div className="mb-6">
+                        <h3 className="text-xl font-bold text-slate-900">Today's Classes</h3>
+                        <p className="text-slate-500 text-sm">Schedule for Thursday, May 16</p>
                     </div>
-                    <div className="bg-[#FFCACA] p-6 rounded-2xl shadow-sm flex flex-col items-center justify-center text-center space-y-1 relative overflow-hidden group hover:shadow-md transition">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-white/20 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
-                        <h4 className="text-rose-900 font-medium text-sm">Attendance</h4>
-                        <span className="text-4xl font-bold text-rose-950">60%</span>
-                        <p className="text-xs text-rose-800/70 font-medium mt-1">24% Absent</p>
+
+                    <div className="space-y-4">
+                        {/* Class Item 1 */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-purple-50 rounded-md border-l-[6px] border-purple-500">
+                            <div className="mb-3 sm:mb-0">
+                                <h4 className="text-purple-700 font-bold text-sm">CS 102</h4>
+                                <h3 className="text-slate-900 font-bold text-lg!">Circuit Theory</h3>
+                                <div className="flex items-center gap-2 text-slate-500 text-sm mt-1">
+                                    <span className="flex items-center gap-1">Room SF 13</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                                <span className="text-slate-900 font-bold text-lg">8:00 AM</span>
+                                <span className="bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-md">
+                                    Absent
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Class Item 2 */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-lime-50 rounded-xl border-l-[6px] border-lime-500">
+                            <div className="mb-3 sm:mb-0">
+                                <h4 className="text-lime-800 font-bold text-sm">MAT 104</h4>
+                                <h3 className="text-slate-900 font-bold text-lg!">Discrete Math</h3>
+                                <div className="flex items-center gap-2 text-slate-500 text-sm mt-1">
+                                    <span className="flex items-center gap-1">Room FF 10</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                                <span className="text-slate-900 font-bold text-lg">10:30 AM</span>
+                                <span className="bg-white/80 text-green-700 text-xs font-bold px-3 py-1 rounded-md border border-green-200">
+                                    Attended
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="bg-[#CFD8DC] p-6 rounded-2xl shadow-sm flex flex-col items-center justify-center text-center space-y-1 relative overflow-hidden group hover:shadow-md transition">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-white/20 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-150 duration-500"></div>
-                        <h4 className="text-slate-700 font-medium text-sm">Requested Leaves</h4>
-                        <span className="text-4xl font-bold text-slate-800">17</span>
-                        <p className="text-xs text-slate-600 font-medium mt-1">11 Approved</p>
+                </div>
+
+                {/* Recent Activity */}
+                <div className="bg-[#1e293b] p-6 rounded-md shadow-xs text-white">
+                    <h3 className="text-xl font-bold mb-8">Recent Activity</h3>
+                    
+                    <div className="relative border-l border-slate-600 ml-3 space-y-10 pl-8 pb-4">
+                        {/* Activity Item 1 */}
+                        <div className="relative">
+                            <div className="absolute -left-[39px] top-1 h-5 w-5 rounded-full border-2 border-[#6366f1] bg-[#1e293b] z-10"></div>
+                            <div>
+                                <h4 className="font-semibold text-white text-base">Checked in for Discrete Math</h4>
+                                <p className="text-slate-400 text-sm mt-1">Today, 10:30 AM</p>
+                            </div>
+                        </div>
+
+                        {/* Activity Item 2 */}
+                        <div className="relative">
+                            <div className="absolute -left-[39px] top-1 h-5 w-5 rounded-full border-2 border-[#10b981] bg-[#1e293b] z-10"></div>
+                            <div>
+                                <h4 className="font-semibold text-white text-base">Completed Biometric Registration</h4>
+                                <p className="text-slate-400 text-sm mt-1">Today, 10:00 AM</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ProfileTab: React.FC<{ student: Mentor }> = ({ student }) => (
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 space-y-6">
+            <div className="bg-white p-6 rounded-md shadow-xs">
+                <h3 className="text-xl font-bold text-slate-900 mb-4">About Student</h3>
+                <p className="text-slate-600 leading-relaxed text-sm">
+                    {student.bio || "Focused on Full Stack Development with React and Node.js."}
+                </p>
+            </div>
+            <div className="bg-white p-6 rounded-md shadow-xs">
+                <h3 className="text-xl font-bold text-slate-900 mb-6">Contact Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InfoCard icon={Mail} label="EMAIL ADDRESS" value={student.email} />
+                    <InfoCard icon={Phone} label="PHONE NUMBER" value={student.phone} />
+                    <InfoCard icon={Calendar} label="DATE JOINED" value={student.date} />
+                    <InfoCard icon={MapPin} label="LOCATION" value="New Delhi, India" />
+                </div>
+            </div>
+        </div>
+        <div className="xl:col-span-1">
+            <div className="bg-[#312E81] p-6 rounded-md shadow-xs text-white h-fit">
+                <h3 className="text-xl font-bold mb-1">Mentorship Session</h3>
+                <p className="text-indigo-200 text-sm mb-6">Next scheduled session</p>
+                <div className="bg-white/10 rounded-xl p-4 flex items-center gap-4 mb-6 border border-white/10 backdrop-blur-sm">
+                   <div className="p-2">
+                     <Calendar className="w-5 h-5 text-indigo-200" />
+                   </div>
+                   <div>
+                     <p className="font-bold text-white text-sm">Thursday, 24 Oct</p>
+                     <p className="text-indigo-200 text-xs">4:00 PM - 5:00 PM</p>
+                   </div>
+                </div>
+                <button className="w-full bg-white text-[#312E81] font-bold py-3 px-4 rounded-xl hover:bg-indigo-50 transition-colors text-sm shadow-sm">
+                  Reschedule
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
+// ================= TASKS TAB =================
+
+const TasksTab = () => {
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+    // Updated data to match the image content
+    const assignedTasks: Task[] = [
+        {
+            id: 1,
+            title: "React Components Deep Dive",
+            due: "Tomorrow, 5:00 PM",
+            status: "Pending",
+            priority: "High",
+            description: "Study the React component lifecycle methods and functional components. Implement a dashboard widget using the 'Compound Component' pattern. Focus on prop drilling vs context API usage.",
+            checklist: [
+                { id: 1, text: "Read Documentation on Hooks", done: true },
+                { id: 2, text: "Create Button Component", done: false },
+                { id: 3, text: "Implement Context API", done: false },
+            ],
+            attachments: 2,
+            completedDate: null,
+            type: "assignment",
+            estTime: "4 Hours"
+        },
+        {
+            id: 2,
+            title: "UI/UX Final Submission",
+            due: "In 3 days",
+            status: "In Progress",
+            priority: "Medium",
+            description: "Final submission of the Figma prototype.",
+            checklist: [],
+            attachments: 0,
+            completedDate: null,
+            type: "project",
+            estTime: "2 Hours"
+        }
+    ];
+
+    const completedTasks: Task[] = [
+        {
+            id: 3,
+            title: "Javascript Basics Quiz",
+            due: "",
+            status: "Completed",
+            description: "Quiz covering ES6+ features.",
+            checklist: [],
+            attachments: 0,
+            completedDate: "Last week",
+            type: "quiz"
+        },
+        {
+            id: 4,
+            title: "Project Setup & Environment",
+            due: "",
+            status: "Completed",
+            description: "Setting up Node, NPM and Git.",
+            checklist: [],
+            attachments: 0,
+            completedDate: "2 weeks ago",
+            type: "assignment"
+        }
+    ];
+
+    if (selectedTask) {
+        return <TaskDetailView task={selectedTask} onBack={() => setSelectedTask(null)} />;
+    }
+
+    return (
+        <section className='space-y-8 animate-in fade-in slide-in-from-right-4 duration-300'>
+            
+            {/* ASSIGNED TASKS SECTION */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-xl font-bold text-slate-900">Assigned Tasks</h3>
+                        <p className="text-slate-500 text-sm mt-1">Active assignments and deadlines.</p>
+                    </div>
+                    <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm shadow-indigo-200">
+                        <Plus className="w-4 h-4" />
+                        Assign Task
+                    </button>
+                </div>
+
+                <div className="bg-white rounded-md shadow-xs overflow-hidden divide-y divide-slate-100">
+                    {assignedTasks.map((task) => (
+                        <div 
+                            key={task.id} 
+                            onClick={() => setSelectedTask(task)}
+                            className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors cursor-pointer group"
+                        >
+                            <div className="flex items-start gap-4">
+                                <div className={`mt-0.5 p-2.5 rounded-full ${task.status === 'In Progress' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'}`}>
+                                    {task.status === 'In Progress' ? <Clock className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-slate-800 text-base mb-1.5">{task.title}</h4>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium bg-slate-100 px-2.5 py-1 rounded-md">
+                                            <Calendar className="w-3.5 h-3.5" />
+                                            {task.due}
+                                        </div>
+                                        {task.priority === 'High' && (
+                                            <span className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-100 px-2 py-1 rounded uppercase tracking-wide">
+                                                High Priority
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pl-14 sm:pl-0">
+                                <span className={`text-xs font-medium px-3 py-1 rounded-full border ${
+                                    task.status === 'In Progress' 
+                                        ? 'bg-amber-50 text-amber-700 border-amber-100' 
+                                        : 'bg-slate-100 text-slate-600 border-slate-200'
+                                }`}>
+                                    {task.status}
+                                </span>
+                                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* COMPLETED TASKS SECTION */}
+            <div className="space-y-4">
+                <div>
+                    <h3 className="text-xl font-bold text-slate-900">Completed Tasks</h3>
+                    <p className="text-slate-500 text-sm mt-1">Past assignments history.</p>
+                </div>
+
+                <div className="bg-white rounded-md shadow-xs overflow-hidden divide-y divide-slate-100">
+                    {completedTasks.map((task) => (
+                        <div 
+                            key={task.id} 
+                            onClick={() => setSelectedTask(task)}
+                            className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors cursor-pointer group"
+                        >
+                            <div className="flex items-start gap-4">
+                                <div className="mt-0.5 p-2.5 rounded-full bg-emerald-100 text-emerald-600">
+                                    <Check className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-slate-700 text-base mb-1.5 group-hover:text-slate-900">{task.title}</h4>
+                                    <div className="flex items-center gap-1.5 text-slate-400 text-xs font-medium">
+                                        <Calendar className="w-3.5 h-3.5" />
+                                        {task.completedDate}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pl-14 sm:pl-0">
+                                <span className="text-xs font-medium px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                    Completed
+                                </span>
+                                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+        </section>
+    );
+};
+
+// ================= NEW TASK DETAILS VIEW =================
+
+const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onBack }) => {
+    // Calculate progress
+    const completedSubtasks = task.checklist.filter(i => i.done).length;
+    const totalSubtasks = task.checklist.length;
+    const progressPercent = totalSubtasks === 0 ? 0 : (completedSubtasks / totalSubtasks) * 100;
+
+    return (
+        <div className="animate-in fade-in zoom-in-95 duration-200">
+            {/* Back Button */}
+            <button
+                onClick={onBack}
+                className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 mb-4 transition-colors group"
+            >
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                Back to Task List
+            </button>
+
+            <div className="flex flex-col xl:flex-row gap-6">
+                {/* LEFT COLUMN: Main Content */}
+                <div className="flex-1 space-y-6">
+                    <div className="bg-white rounded-md shadow-xs p-6 sm:p-8">
+                        {/* Header Tags */}
+                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                            <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-700 border border-rose-100 flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+                                {task.status}
+                            </span>
+                            {task.priority === 'High' && (
+                                <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-700 border border-rose-100">
+                                    High Priority
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Title */}
+                        <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-8">{task.title}</h3>
+
+                        {/* Description */}
+                        <div className="mb-8">
+                            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">Description</h4>
+                            <p className="text-slate-600 text-sm leading-7">
+                                {task.description}
+                            </p>
+                        </div>
+
+                        {/* Subtasks Section */}
+                        {task.checklist.length > 0 && (
+                            <div className="pt-6 border-t border-slate-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 uppercase tracking-wide">
+                                        <CheckSquare className="w-4 h-4 text-indigo-600" />
+                                        Subtasks
+                                    </h3>
+                                    <span className="text-xs font-medium text-slate-500">
+                                        {completedSubtasks}/{totalSubtasks} Completed
+                                    </span>
+                                </div>
+
+                                {/* Progress Bar */}
+                                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-6">
+                                    <div 
+                                        className="h-full bg-indigo-500 rounded-full transition-all duration-500" 
+                                        style={{ width: `${progressPercent}%` }}
+                                    ></div>
+                                </div>
+
+                                {/* Checklist Items */}
+                                <div className="space-y-3">
+                                    {task.checklist.map((item) => (
+                                        <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 hover:border-indigo-100 hover:bg-slate-50 transition-colors group">
+                                            <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors cursor-pointer ${
+                                                item.done ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-slate-300 group-hover:border-indigo-300'
+                                            }`}>
+                                                {item.done && <Check className="w-3.5 h-3.5 text-white" />}
+                                            </div>
+                                            <span className={`text-sm ${item.done ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}`}>
+                                                {item.text}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* RIGHT COLUMN: Sidebar */}
+                <div className="w-full xl:w-80 space-y-6">
+                    {/* Task Details Card */}
+                    <div className="bg-white rounded-md shadow-xs p-6">
+                        <h3 className="text-lg! font-bold text-slate-900 mb-6 uppercase tracking-wide">Task Details</h3>
+                        <div className="space-y-5">
+                            <div className="flex items-start gap-4">
+                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                                    <Calendar className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-slate-500 font-medium mb-0.5">Due Date</p>
+                                    <p className="text-sm font-bold text-slate-900">{task.due}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-4">
+                                <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
+                                    <Flag className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-slate-500 font-medium mb-0.5">Priority Level</p>
+                                    <p className="text-sm font-bold text-slate-900">{task.priority || "Normal"}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-4">
+                                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                                    <Clock className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-slate-500 font-medium mb-0.5">Est. Time</p>
+                                    <p className="text-sm font-bold text-slate-900">{task.estTime || "N/A"}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Attachments Card */}
+                    <div className="bg-white rounded-md shadow-xs p-6">
+                        <h3 className="text-lg! font-bold text-slate-900 mb-4 uppercase tracking-wide">Attachments ({task.attachments})</h3>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-indigo-200 hover:shadow-sm transition-all cursor-pointer bg-slate-50/50">
+                                <div className="p-2 bg-white rounded-lg border border-slate-100 shadow-sm text-slate-400">
+                                    <Paperclip className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-slate-700 truncate">Project_Guidelines.pdf</p>
+                                    <p className="text-xs text-slate-400">2.4 MB</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -220,196 +631,14 @@ const TabButton: React.FC<TabButtonProps> = ({ label, isActive, onClick }) => (
     </button>
 );
 
-const ProfileTab: React.FC<{ student: Mentor }> = ({ student }) => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-xl border border-slate-200/60 shadow-sm">
-                <h3 className="text-lg font-bold text-slate-800 mb-4">About Mentor</h3>
-                <p className="text-slate-600 text-sm leading-relaxed">
-                    {student.bio || "No biography provided."}
-                </p>
-            </div>
-            <div className="bg-white p-6 rounded-xl border border-slate-200/60 shadow-sm">
-                <h3 className="text-lg font-bold text-slate-800 mb-4">Contact Information</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <InfoCard icon={Mail} label="Email Address" value={student.email} />
-                    <InfoCard icon={Phone} label="Phone Number" value={student.phone} />
-                    <InfoCard icon={Calendar} label="Date Joined" value={student.date} />
-                    <InfoCard icon={MapPin} label="Location" value="Dehradun, India" />
-                </div>
-            </div>
-        </div>
-    </div>
-);
-
-const ActivityTab: React.FC<{ studentName: string }> = ({ studentName }) => {
-    const [posts, setPosts] = useState<Post[]>([
-        {
-            id: 1,
-            author: studentName,
-            authorAvatar: null,
-            timestamp: new Date().toISOString(),
-            content: "Just finished the React Advanced Patterns module! The compound component pattern is really powerful for building reusable UI.",
-            likes: 12,
-            liked: false,
-            comments: [1, 2],
-            shares: 1,
-            image: null
-        },
-    ]);
-
-    // ✅ FIX 3: Added underscore to 'dateString' to silence unused variable warning
-    const formatTimeAgo = (_dateString: string) => {
-        return "2 hours ago"; 
-    };
-
-    const handleLike = (id: number) => {
-        setPosts(currentPosts => currentPosts.map(post => {
-            if (post.id === id) {
-                return {
-                    ...post,
-                    liked: !post.liked,
-                    likes: post.liked ? post.likes - 1 : post.likes + 1
-                };
-            }
-            return post;
-        }));
-    };
-
-    return (
-        <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm p-6">
-                <h3 className="text-lg font-bold text-slate-900 mb-6">Activity Feed</h3>
-                <div className="space-y-6">
-                    {posts.map((post) => (
-                        <article key={post.id} className="border-b border-slate-100 pb-6 last:border-b-0 last:pb-0">
-                            <div className="flex items-center space-x-3 mb-3">
-                                <Avatar name={post.author} size="sm" />
-                                <div>
-                                    <h4 className="font-semibold text-slate-900 text-sm">{post.author}</h4>
-                                    <p className="text-xs text-slate-500">{formatTimeAgo(post.timestamp)}</p>
-                                </div>
-                            </div>
-                            <div className="mb-4 pl-12 sm:pl-14">
-                                <p className="text-slate-700 text-sm leading-relaxed mb-3">{post.content}</p>
-                            </div>
-                            <div className="flex items-center justify-between pl-12 sm:pl-14">
-                                <div className="flex items-center space-x-6">
-                                    <button onClick={() => handleLike(post.id)} className={`flex items-center space-x-2 text-sm transition-colors ${post.liked ? "text-rose-600" : "text-slate-500 hover:text-rose-600"}`}>
-                                        <Heart className={`w-4 h-4 ${post.liked ? "fill-current" : ""}`} />
-                                        <span>{post.likes}</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const TasksTab = () => {
-    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-
-    const allTasks: Task[] = [
-        {
-            id: 1,
-            title: "React Components Deep Dive",
-            due: "Tomorrow, 5:00 PM",
-            status: "Pending",
-            priority: "High",
-            description: "Study the React component lifecycle methods.",
-            checklist: [
-                { id: 1, text: "Read Documentation on Hooks", done: true },
-                { id: 2, text: "Create Button Component", done: false },
-            ],
-            attachments: 2,
-            completedDate: null
-        }
-    ];
-
-    if (selectedTask) {
-        return <TaskDetailView task={selectedTask} onBack={() => setSelectedTask(null)} />;
-    }
-
-    return (
-        <section className='space-y-6 animate-in fade-in slide-in-from-right-4 duration-300'>
-            <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-800">Assigned Tasks</h3>
-                    </div>
-                </div>
-                <div className="divide-y divide-slate-100">
-                    {allTasks.map((task) => (
-                        <div
-                            key={task.id}
-                            onClick={() => setSelectedTask(task)}
-                            className="group p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-slate-50 transition cursor-pointer gap-4"
-                        >
-                            <div className="flex items-start gap-4">
-                                <div className={`mt-1 p-2 rounded-full bg-slate-100 text-slate-500`}>
-                                    <AlertCircle className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">{task.title}</p>
-                                    <div className="flex items-center gap-3 mt-1.5">
-                                        <span className="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-100 px-2 py-0.5 rounded">
-                                            <Calendar className="w-3 h-3" /> {task.due}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </section>
-    );
-};
-
-const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onBack }) => {
-    return (
-        <div className="animate-in fade-in zoom-in-95 duration-200">
-            <button
-                onClick={onBack}
-                className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 mb-4 transition-colors group"
-            >
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                Back to Task List
-            </button>
-            <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm p-6 sm:p-8">
-                <div className="flex items-start justify-between gap-4 mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{task.title}</h1>
-                    </div>
-                </div>
-                <div className="prose prose-slate prose-sm max-w-none">
-                    <p className="text-slate-600 leading-relaxed mb-6">{task.description}</p>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const DocumentsTab = () => (
-    <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm min-h-[400px] flex flex-col items-center justify-center py-12 text-center">
-        <div className="bg-indigo-50 p-4 rounded-full mb-4">
-            <FolderOpen className="w-8 h-8 text-indigo-500" />
-        </div>
-        <h3 className="text-lg font-bold text-slate-900">No Documents Uploaded</h3>
-    </div>
-);
-
 const InfoCard: React.FC<InfoCardProps> = ({ icon: Icon, label, value }) => (
-    <div className="flex items-center gap-4 p-3 rounded-md bg-slate-50/50">
-        <div className="bg-white p-2 rounded-md border border-slate-100 text-slate-400">
-            <Icon className="w-4 h-4" />
+    <div className="flex items-center gap-4 p-4 rounded-lg bg-slate-50/50 border border-slate-100/50">
+        <div className="bg-white p-2.5 rounded-md border border-slate-100 text-slate-400 shadow-sm">
+            <Icon className="w-5 h-5" />
         </div>
         <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{label}</p>
-            <p className="text-sm font-semibold text-slate-800">{value || "N/A"}</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
+            <p className="text-sm font-bold text-slate-700">{value || "N/A"}</p>
         </div>
     </div>
 );

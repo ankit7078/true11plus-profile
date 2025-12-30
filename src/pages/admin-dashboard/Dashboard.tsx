@@ -7,12 +7,9 @@ import Header from './components/layout/Header';
 
 // Tab Views
 import Profile from './components/tabviews/Profile'; 
-import Overview from './components/tabviews/Overview';
 import University from './components/tabviews/University';
 import Scholarship from './components/tabviews/Scholarship';
 import Settings from './components/tabviews/Settings';
-import Tasks from './components/tabviews/Tasks';
-import MentorTasks from './components/tabviews/mentortask/MentorTask';
 import Students from "./components/tabviews/students/page"
 import Mentor from "./components/tabviews/mentor/page"
 import BlogList from './components/tabviews/Blog';
@@ -41,14 +38,11 @@ const App = () => {
   // 2. Logic to determine which component to render based on URL param
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return <Overview />;
       case 'university': return <University />;
       case 'students': return <Students />;
       case 'mentor': return <Mentor />;
       case 'blog': return <BlogList />;
       case 'scholarship': return <Scholarship />;
-      case 'tasks': return <Tasks />;
-      case 'mentortasks': return <MentorTasks />;
       case 'settings': return <Settings />;
       case 'legals': return <LegalTabs />;
       case 'enquiry': return <EnquiryDashboard />;
@@ -56,18 +50,13 @@ const App = () => {
       case 'helpandsupport': return <HelpSupport />;
       case 'newsandupdate': return <NewsDashboard />;
       case 'profile': return <Profile />;
-      default: return <Overview />;
+      default: return <Profile />;
     }
   };
 
   return (
     <div className="flex h-screen bg-[var(--bg-light)] font-sans text-slate-800 overflow-hidden">
       <ScrollbarStyles />
-
-      {/* 3. Updated Sidebar Props:
-         We removed 'activeTab' and 'setActiveTab' because the Sidebar 
-         now writes to the URL, and this App component reads from the URL.
-      */}
       <Sidebar
         isDesktopOpen={isDesktopOpen}
         isMobileOpen={isMobileOpen}
