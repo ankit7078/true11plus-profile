@@ -4,7 +4,7 @@
 
 export interface Student {
   name: string;
-  id: string;
+  id: string | number;
   course: string;
   status: string;
   progress: string;
@@ -17,7 +17,7 @@ export interface Student {
 // ================= COMPONENT PROPS =================
 
 export interface StudentDetailProps {
-  student?: Student;
+  student?: Student[];
   onBack: () => void;
 }
 

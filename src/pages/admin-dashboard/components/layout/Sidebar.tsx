@@ -133,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <SidebarItem icon={Award} label="Scholarship" tabId="scholarship" />
                 <SidebarItem icon={BookOpen} label="Blog" tabId="blog" />
                 <SidebarItem icon={CalendarDays} label="Events" tabId="events" />
-                <SidebarItem icon={Newspaper} label="New & Update" tabId="newsandupdate" />
+                <SidebarItem icon={Newspaper} label="News & Update" tabId="newsandupdate" />
                 <SidebarItem icon={MessageSquareQuote} label="Enquiry" tabId="enquiry" />
                 <SidebarItem icon={LifeBuoy} label="Help & Support" tabId="helpandsupport" />
                 <SidebarItem icon={Scale} label="Legals" tabId="legals" />

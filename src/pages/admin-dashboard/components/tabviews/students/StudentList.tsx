@@ -1,16 +1,8 @@
 import React from 'react';
 import { StatusBadge, Avatar, ProgressBar } from './UIHelpers';
+import type { Student } from './page';
 
 // --- Interfaces ---
-
-export interface Student {
-  id: string | number;
-  name: string;
-  email: string;
-  course: string;
-  progress: string; // Matches the ProgressBarProps value type (e.g. "75%")
-  status: string;   // Matches StatusBadgeProps (e.g. "Active")
-}
 
 interface StudentListProps {
   students: Student[];
@@ -41,7 +33,7 @@ const StudentList: React.FC<StudentListProps> = ({ students, onView }) => {
               <tr>
                 <Th>Student</Th>
                 <Th>Email</Th>
-                <Th>Course</Th>
+                <Th>Mentor</Th>
                 <Th>Progress</Th>
                 <Th>Status</Th>
                 <Th>Action</Th>

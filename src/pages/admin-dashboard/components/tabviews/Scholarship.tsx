@@ -466,8 +466,8 @@ const Scholarship: React.FC = () => {
               <tr className="bg-gray-50/50 border-b border-gray-200">
                 <th className="py-4 px-6 text-xs font-bold uppercase tracking-wider text-gray-500">Scholarship Name</th>
                 <th className="py-4 px-6 text-xs font-bold uppercase tracking-wider text-gray-500">Amount</th>
-                <th className="py-4 px-6 text-xs font-bold uppercase tracking-wider text-gray-500">Deadline</th>
-                <th className="py-4 px-6 text-xs font-bold uppercase tracking-wider text-gray-500">Match</th>
+                <th className="py-4 px-6 text-xs font-bold uppercase tracking-wider text-gray-500">Last Date</th>
+                {/* <th className="py-4 px-6 text-xs font-bold uppercase tracking-wider text-gray-500">Match</th> */}
                 <th className="py-4 px-6 text-xs font-bold uppercase tracking-wider text-gray-500">Status</th>
                 <th className="py-4 px-6 text-xs font-bold uppercase tracking-wider text-gray-500 text-right">Action</th>
               </tr>
@@ -485,7 +485,7 @@ const Scholarship: React.FC = () => {
                   <td className="py-4 px-6 text-sm text-gray-600">
                     <div className="flex items-center"><Calendar className="w-3.5 h-3.5 mr-1.5 text-gray-400" /> {item.deadline}</div>
                   </td>
-                  <td className="py-4 px-6"><MatchProgressBar score={item.matchScore} /></td>
+                  {/* <td className="py-4 px-6"><MatchProgressBar score={item.matchScore} /></td> */}
                   <td className="py-4 px-6"><StatusBadge status={item.status} /></td>
                   <td className="py-4 px-6 text-right relative">
                     <div className="relative inline-block text-left dropdown-container">
