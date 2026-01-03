@@ -1,140 +1,64 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import Footer from "./components/Footer";
-import ProfileDetails from "./pages/Public-profile";
-import Home from "./pages/Home";
-import Tasks from "./pages/tasks/Tasks";
-import Assessment from "./pages/Assessment";
-import Dashboard from "./pages/mentor-dashboard/Dashboard";
-import UserDashboard from "./pages/user-dashboard/Dashboard";
-import AdminDashboard from "./pages/admin-dashboard/Dashboard";
-import Profile from "./pages/Profile"
-import PostProfile from "./pages/Post-profile";
-import RoleSelect from "./pages/RoleSelect";
-// import MentorProfile from "./pages/mentor-dashboard/Profile";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
+import Login from './page/Login';
+import DashboardLayout from './layout/DashboardLayout';
+import AdminRoutes from './routes/AdminRoutes';
+import MentorRoutes from './routes/MentorRoutes';
+import UserRoutes from './routes/UserRoutes';
+import Navbar from './components/ManiNavbar';
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-  return <>{children}</>;
-};
-
-// Wrapper used to hide Navbar/Footer for specific pages
-function LayoutWrapper({ children }: { children: React.ReactNode }) {
+// 1. Logic to show/hide the top Navbar
+const ConditionalNavbar = () => {
   const location = useLocation();
 
-  const hideLayoutRoutes = [
-    "/mentor/dashboard",
-    "/user/dashboard",
-    "/mentor/profile",
-    "/",
-    "/admin/dashboard"
-    // "/user",
-    // "/mentor",
-    // "/admin",
-  ]
-  // Pages where Navbar & Footer should be hidden
-  const hideLayout = hideLayoutRoutes.includes(location.pathname);
+  const isHidden =
+    location.pathname === '/login' ||
+    location.pathname.startsWith('/mentor') ||
+    location.pathname.startsWith('/admin') ||
+    location.pathname === '/user/dashboard' ||
+    location.pathname === '/user/university' ||
+    location.pathname === '/user/scholarship' ||
+    location.pathname === '/user/taskuser' ||
+    location.pathname === '/user/taskuser/1'||
+    location.pathname === '/user/taskuser/2'||
+    location.pathname === '/user/taskuser/3'||
+    location.pathname === '/user/taskuser/4'||
+    location.pathname === '/user/settings';
 
-  return (
-    <>
-      {!hideLayout && <Navbar />}
-      {children}
-      {!hideLayout && <Footer />}
-    </>
-  );
-}
+  if (isHidden) return null;
+  return <Navbar />;
+};
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <LayoutWrapper>
-          <Routes>
-            <Route path="/home" element={<Home />} />
-            <Route path="/user/home" element={<Home />} />
-            <Route path="/" element={<RoleSelect />} />
+    <BrowserRouter>
+      {/* Navbar will now appear on /user/home because of the logic above */}
+      <ConditionalNavbar />
 
-            <Route
-              path="/admin/dashboard"
-              element={
-                <ProtectedRoute>
-                  < AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/user/tasks"
-              element={
-                <ProtectedRoute>
-                  <Tasks />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/user/assessment"
-              element={
-                <ProtectedRoute>
-                  <Assessment />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/public-profile"
-              element={
-                <ProtectedRoute>
-                  <ProfileDetails />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/post-profile"
-              element={
-                <ProtectedRoute>
-                  <PostProfile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/mentor/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/user/dashboard"
-              element={
-                <ProtectedRoute>
-                  <UserDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/dashboard/students"
-              element={
-                <ProtectedRoute>
-                  <UserDashboard />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </LayoutWrapper>
-      </Router>
-    </AuthProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+
+        {/* Redirect root to Login (or to /user/home if you prefer) */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* 2. ROUTE CONFIGURATION
+           We keep UserRoutes OUTSIDE the DashboardLayout wrapper.
+           This allows UserHome to be a full-page with the main Navbar.
+           UserRoutes will handle switching between Home and Dashboard internally.
+        */}
+        <Route path="/user/*" element={<UserRoutes />} />
+
+        {/* Protected Dashboard Routes 
+           (For Admin and Mentor who always need the sidebar layout)
+        */}
+        <Route element={<DashboardLayout />}>
+          <Route path="/admin/*" element={<AdminRoutes />} />
+          <Route path="/mentor/*" element={<MentorRoutes />} />
+        </Route>
+
+        <Route path="*" element={<div>404 Not Found</div>} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

@@ -1,49 +1,59 @@
 @import "tailwindcss";
-@import 'swiper/css';
+@import "swiper/css";
 
 :root {
-  --bg-main: #ffffff;      
-  --bg-light: #f9f9f9;     
-  --text-main: #484848; 
-  --text-subtle:   #949494;
-  --border: #cbcbcb ;
-  --purple:#9810fa;
-  --purple-subtle:#f3e8ff;
-
+  --bg-main: #ffffff;
+  --bg-light: #f9f9f9;
+  --text-main: #484848;
+  --text-subtle: #949494;
+  --border: #cbcbcb;
+  --purple: #9810fa;
+  --purple-subtle: #f3e8ff;
 }
 
-/* Custom Scrollbar Hiding */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+/* Use this class name: 'custom-scrollbar' or keep 'no-scrollbar' if you prefer */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px; /* Width of vertical scrollbar */
+  height: 6px; /* Height of horizontal scrollbar */
 }
 
-button{
-    cursor: pointer;
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* Background of the track */
 }
 
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* Color of the handle (Gray) */
+  border-radius: 10px; /* Round edges */
+}
 
+/* Firefox Support */
+.custom-scrollbar {
+  scrollbar-width: thin; /* IMPORTANT: Makes it thin on Firefox */
+  scrollbar-color: #cbd5e1 transparent; /* Handle color | Track color */
+}
 
-h3{
+button {
+  cursor: pointer;
+}
+
+h3 {
   font-size: 24px;
 }
 @media (max-width: 480px) {
-  h3{
+  h3 {
     font-size: 20px;
   }
 }
-h1,h2{
-  font-size: 40px
+h1,
+h2 {
+  font-size: 40px;
 }
 @media (max-width: 480px) {
-  h1, h2 {
+  h1,
+  h2 {
     font-size: 30px; /* mobile */
   }
 }
-
 
 p,
 .paragraph {
@@ -53,7 +63,7 @@ p,
 @media (max-width: 768px) {
   p,
   .paragraph {
-    font-size: 14px; 
+    font-size: 14px;
   }
 }
 

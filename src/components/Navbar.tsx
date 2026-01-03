@@ -1,164 +1,114 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Home, LayoutDashboard, User, ClipboardList } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
-import AuthModal from "./AuthModal";
+import React from 'react';
+import { Link } from 'react-router-dom'; // 1. Import Link
+import {Bell, Search, PanelLeft } from 'lucide-react';
 
-/* ---------------- TYPES ---------------- */
-
-interface NavItem {
-  name: string;
-  href: string;
-  icon: LucideIcon;
-  authOnly?: boolean;
+interface NavbarProps {
+  toggleSidebar: () => void;
+  isCollapsed: boolean;
+  role: string | null;
+  userName?: string;
+  userImage?: string;
+  onLogout: () => void;
 }
 
-/* ---------------- DATA ---------------- */
+const Navbar: React.FC<NavbarProps> = ({
+  toggleSidebar,
+  isCollapsed,
+  role = "Student",
+  userName = "User",
+  userImage,
+  // onLogout
+}) => {
 
-const NAV_ITEMS: NavItem[] = [
-  { name: "Home", href: "/user/home", icon: Home },
-  { name: "Assessment", href: "/user/assessment", icon: ClipboardList, authOnly: true },
-  { name: "Tasks", href: "/user/tasks", icon: ClipboardList, authOnly: true },
-  { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard, authOnly: true },
-  { name: "Profile", href: "/profile", icon: User, authOnly: true },
-];
+  // 2. Helper function to determine Profile URL based on Role
+  const getProfilePath = (userRole: string | null) => {
+    const r = userRole?.toLowerCase() || "";
 
-/* ---------------- COMPONENT ---------------- */
+    if (r === "admin") return "/admin/profile";
+    if (r === "mentor") return "/mentor/profile";
+    if (r === "student") return "/user/profile";
 
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+    return "/user/profile"; // Fallback default
+  };
 
-  const location = useLocation();
-  const { user, logout } = useAuth();
-
-  const isActive = (path: string) => location.pathname === path;
-
-  const filteredNav = NAV_ITEMS.filter(
-    (item) => !item.authOnly || user
-  );
+  const profileLink = getProfilePath(role);
 
   return (
-    <nav className="bg-[var(--bg-main)] border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 justify-between items-center">
+    <nav
+      className={`fixed top-0 right-0 bg-white border-b border-gray-100 h-16 flex items-center justify-between px-2 z-30 transition-all duration-300
+      left-0 
+      ${isCollapsed ? 'lg:left-16' : 'lg:left-64'} 
+      `}
+    >
+      {/* 1. LEFT SECTION: Sidebar Toggle */}
+      <div className="flex items-center gap-4">
+        <button
+          onClick={toggleSidebar}
+          className="p-2 text-gray-600 bg-gray-100 hover:bg-purple-50 hover:text-purple-600 rounded-lg cursor-pointer transition-colors"
+        >
+          <PanelLeft size={20} />
+        </button>
+      </div>
 
-          {/* LOGO */}
-          <Link to="/" className="flex items-center">
-            <img
-              src="/img/logo.png"
-              alt="true11plus"
-              className="h-10 w-auto object-contain"
-            />
-          </Link>
-
-          {/* DESKTOP MENU */}
-          <div className="hidden md:flex items-center space-x-2">
-            {filteredNav.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition
-                    ${isActive(item.href)
-                      ? "text-blue-700 bg-blue-50"
-                      : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
-                    }`}
-                >
-                  <Icon size={16} />
-                  {item.name}
-                </Link>
-              );
-            })}
-
-            {user ? (
-              <button
-                onClick={logout}
-                className="ml-3 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition"
-              >
-                Logout
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  setAuthMode("login");
-                  setShowAuthModal(true);
-                }}
-                className="ml-3 text-gray-700 hover:text-blue-700 font-medium"
-              >
-                Sign In
-              </button>
-            )}
+      {/* 2. CENTER SECTION: Search Bar */}
+      <div className="flex-1 px-8 hidden md:block">
+        <div className="relative group">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-purple-600" />
           </div>
-
-          {/* MOBILE BUTTON */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden text-gray-700 p-2"
-          >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <input
+            type="text"
+            className="block w-full pl-11 pr-4 py-2 rounded-xl border border-gray-300 leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent transition-all shadow-xs"
+            placeholder="Search..."
+          />
         </div>
       </div>
 
-      {/* MOBILE MENU */}
-      {isOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200">
-          <div className="px-4 py-4 space-y-2">
-            {filteredNav.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition
-                    ${isActive(item.href)
-                      ? "text-blue-700 bg-blue-50"
-                      : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
-                    }`}
-                >
-                  <Icon size={20} />
-                  {item.name}
-                </Link>
-              );
-            })}
+      {/* 3. RIGHT SECTION: Notifications & Profile */}
+      <div className="flex items-center gap-4">
 
-            {user ? (
-              <button
-                onClick={() => {
-                  logout();
-                  setIsOpen(false);
-                }}
-                className="w-full mt-2 bg-red-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-red-700 transition"
-              >
-                Logout
-              </button>
+        {/* Notification Bell */}
+        <button className="relative p-2 bg-gray-100 rounded-md text-gray-600 hover:bg-purple-50 hover:text-purple-600 transition-colors border border-gray-100 shadow-xs">
+          <Bell size={20} />
+          <span className="absolute top-2 right-2.5 block h-2 w-2 rounded-full ring-2 ring-white bg-red-500 transform translate-x-1/2 -translate-y-1/2"></span>
+        </button>
+
+        {/* Vertical Divider */}
+        <div className="h-8 w-px bg-gray-200 hidden sm:block mx-1"></div>
+
+        {/* 4. Profile Section Link */}
+        {/* Wrapped in Link to make it clickable */}
+        <Link
+          to={profileLink}
+          className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-xl  transition-colors cursor-pointer group"
+          title="Go to Profile"
+        >
+          {/* Text Info */}
+          <div className="hidden sm:flex flex-col items-end">
+            <span className="text-sm text-gray-500 font-medium leading-tight group-hover:text-purple-600 transition-colors">
+              {role || "Student"}
+            </span>
+            <span className="text-base font-bold text-gray-900 leading-tight">
+              {userName}
+            </span>
+          </div>
+
+          {/* Avatar */}
+          <div className="h-10 w-10 rounded-full bg-gray-200 border-2 border-white shadow-sm overflow-hidden group-hover:border-purple-100 transition-colors">
+            {userImage ? (
+              <img
+                src={userImage}
+                alt="Profile"
+                className="h-full w-full object-cover"
+              />
             ) : (
-              <button
-                onClick={() => {
-                  setAuthMode("login");
-                  setShowAuthModal(true);
-                  setIsOpen(false);
-                }}
-                className="w-full mt-2 border border-blue-700 text-blue-700 px-4 py-3 rounded-lg font-medium hover:bg-blue-50 transition"
-              >
-                Sign In
-              </button>
+              <div className="h-full w-full flex items-center justify-center bg-indigo-100 text-indigo-600 font-bold">
+                {userName.charAt(0)}
+              </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* AUTH MODAL */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        initialMode={authMode}
-      />
+        </Link>
+      </div>
     </nav>
   );
 };
